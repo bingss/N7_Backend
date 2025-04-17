@@ -113,23 +113,22 @@ const userController = {
     //     })
     // },
     async getProfile(req, res, next) {
-      const { id } = req.user
-      const userRepository = dataSource.getRepository('User')
-      const user = await userRepository.findOne({
-          select: ['serialNo','name', 'email','role'],
-          where: { id }
-      })
-
-      if(!user) {
-        next(appError(400, '未找到使用者'))
-        return
-      }
+      // 似乎驗證時已取得user資料，所以不再次尋找
+      // const { id } = req.user
+      // const userRepository = dataSource.getRepository('User')
+      // const user = await userRepository.findOne({
+      //     select: ['serialNo','name', 'email','role'],
+      //     where: { id }
+      // })
 
       res.status(200).json({
-          status: 'success',
+          status: true,
           message: '取得成功',
           data: {
-              user
+            'serialNo':req.user.serialNo,
+            'name': req.user.name,
+            'email': req.user.email,
+            'role': req.user.role
           }
       })
       return

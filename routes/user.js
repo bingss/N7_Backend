@@ -20,7 +20,7 @@ const fakeLogin = require('../middlewares/fakeLogin')
 
 // router.post('/login', handleErrorAsync(userController.postLogin));
 
-//取得使用者資料
+//取得使用者資料，fakeLogin傳入userid，假裝已經登入使用
 // router.get('/profile', isAuth, handleErrorAsync(userController.getProfile));
 router.get('/profile',
     fakeLogin(dataSource.getRepository('User'),'c2d905d7-a1b0-45dd-9f16-ac38a80ded7f',logger),
