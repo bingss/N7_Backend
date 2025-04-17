@@ -1,13 +1,12 @@
 # N7_Backend
 
-初始化流程參考：
+- 初始化流程參考
 1. 加入.env檔
 2. npm install
 3. npm run start
 4. npm run dev
-
-
-.env檔範例
+---
+- .env檔範例
 ```
 # PostgreSQL 容器設定
 POSTGRES_USER=testHexschool
