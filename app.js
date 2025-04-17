@@ -4,13 +4,14 @@ const path = require('path')
 const pinoHttp = require('pino-http')
 
 const logger = require('./utils/logger')('App')
-const creditPackageRouter = require('./routes/creditPackage')
-const skillRouter = require('./routes/skill')
-const usersRouter = require('./routes/user')
-const adminRouter = require('./routes/admin')
-const coachRouter = require('./routes/coach')
+// const creditPackageRouter = require('./routes/creditPackage')
+// const skillRouter = require('./routes/skill')
+const userRouter = require('./routes/user')
+// const adminRouter = require('./routes/admin')
+// const coachRouter = require('./routes/coach')
 // const courseRouter = require('./routes/courses')
-const uploadRouter = require('./routes/upload')
+// const uploadRouter = require('./routes/upload')
+
 
 const app = express()
 app.use(cors())
@@ -31,20 +32,21 @@ app.get('/healthcheck', (req, res) => {
   res.status(200)
   res.send('OK')
 })
-app.use('/api/credit-package', creditPackageRouter)
-app.use('/api/coaches/skill', skillRouter)
-app.use('/api/user', usersRouter)
-app.use('/api/admin', adminRouter)
-app.use('/api/coaches', coachRouter)
+// app.use('/api/credit-package', creditPackageRouter)
+// app.use('/api/coaches/skill', skillRouter)
+app.use('/api/v1/users', userRouter)
+// app.use('/api/admin', adminRouter)
+// app.use('/api/coaches', coachRouter)
 // app.use('/api/courses', courseRouter)
-app.use('/api/upload', uploadRouter)
+// app.use('/api/upload', uploadRouter)
+
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   req.log.error(err)
   if (err.status) {
     res.status(err.status).json({
-      status: 'failed',
+      status: false,
       message: err.message
     })
     return
