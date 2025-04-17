@@ -32,6 +32,10 @@ module.exports = new EntitySchema({
       nullable: false,
       select: false
     },
+    serialNo: {
+      type: 'uuid',
+      generated: 'uuid'
+    },
     created_at: {
       type: 'timestamp',
       createDate: true,

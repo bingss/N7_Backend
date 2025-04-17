@@ -4,7 +4,7 @@ const PERMISSION_DENIED_STATUS_CODE = 401
 const FailedMessageMap = {
   expired: 'Token 已過期',
   invalid: '無效的 token',
-  missing: '請先登入'
+  missing: '尚未登入'
 }
 
 function generateError (status, message) {
