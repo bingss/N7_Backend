@@ -9,6 +9,7 @@
     "clean": "docker compose --env-file .env down -v",
     "test": "node_modules/.bin/jest",
     "dev": "nodemon ./bin/www.js",
+    "start2": "node ./bin/www",
     "init:schema": "typeorm schema:sync -d ./db/data-source.js"
   },
   "dependencies": {
