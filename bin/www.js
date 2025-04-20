@@ -45,7 +45,7 @@ server.listen(port, async () => {
     logger.info('資料庫連線成功');
     logger.info(`伺服器運作中. port: ${port}`);
   } catch (error) {
-    logger.error(`資料庫連線失敗: ${error.message}`);
+    logger.error('資料庫連線失敗:', error);
     process.exit(1);
   }
 });

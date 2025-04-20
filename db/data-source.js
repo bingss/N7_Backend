@@ -16,10 +16,11 @@ const dataSource = new DataSource({
   database: config.get('db.database'),
   synchronize: config.get('db.synchronize'),
   poolSize: 10,
-  entities: [
-    User
-  ],
-  ssl: config.get('db.ssl')
-})
+  entities: [User],
+  ssl: config.get('db.ssl'),
+  extra: {
+    ssl: config.get('db.ssl') ? { rejectUnauthorized: false } : false
+  }
+});
 
 module.exports = { dataSource }
