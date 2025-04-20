@@ -133,6 +133,14 @@ const userController = {
       })
       return
     },
+
+    async getAuth(req, res, next) {
+      res.status(200).json({
+          status: true,
+          message: '驗證成功',
+      })
+      return
+    },
     // async putProfile(req, res, next) {
     //     const { id } = req.user;
     //     const { name } = req.body;

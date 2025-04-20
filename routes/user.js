@@ -30,4 +30,8 @@ router.get('/profile',
 
 // router.put('/password', isAuth, handleErrorAsync(userController.putPassword));
 
+router.get('/auth', isAuth, handleErrorAsync(userController.getAuth));
+// router.get('/auth/refresh', isAuth, handleErrorAsync(userController.getRefresh));
+// router.get('/auth/logout', isAuth, handleErrorAsync(userController.getLogout));
+
 module.exports = router
