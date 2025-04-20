@@ -7,7 +7,7 @@ const isNumber = (value) => {
 }
 
 const isValidPassword = (value) => {
-  const passwordPattern = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,16}/
+  const passwordPattern = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,32}/
   return passwordPattern.test(value);
 }
 
