@@ -16,25 +16,25 @@ const userController = {
     const { name, email, password, confirm_password } = req.body;
   
     if (!name || !email || !password || !confirm_password) {
-      return res.status(400).json({ message: '欄位未填寫正確' });
+      return res.status(400).json({ status: false, message: '欄位未填寫正確' });
     }
 
     if (!emailRule.test(email)) {
-      return res.status(400).json({ message: 'Email 不符合格式' });
+      return res.status(400).json({ status: false, message: 'Email 不符合格式' });
     }
 
     if(!isValidPassword(password)) {
-      return res.status(400).json({ message: '密碼不符合規則，需要包含英文數字大小寫，最短 8 個字，最長 32 個字' });
+      return res.status(400).json({ status: false, message: '密碼不符合規則，需要包含英文數字大小寫，最短 8 個字，最長 32 個字' });
     }
   
     if (password !== confirm_password) {
-      return res.status(400).json({ message: '密碼與確認密碼不一致' });
+      return res.status(400).json({ status: false, message: '密碼與確認密碼不一致' });
     }
   
     const existingUser = await userRepository.findOne({ where: { email } });
   
     if (existingUser) {
-      return res.status(409).json({ message: '註冊失敗，Email 已被使用' });
+      return res.status(409).json({ status: false, message: '註冊失敗，Email 已被使用' });
     }
   
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -48,7 +48,7 @@ const userController = {
   
     await userRepository.save(newUser);
   
-    res.status(201).json({ message: '註冊成功' });
+    res.status(201).json({ status: true, message: '註冊成功' });
   },
 
   // 登入
@@ -56,7 +56,7 @@ const userController = {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: '欄位未填寫正確' });
+      return res.status(400).json({ status: false, message: '欄位未填寫正確' });
     }
 
     const userRepository = dataSource.getRepository('User');
@@ -66,16 +66,17 @@ const userController = {
     });
 
     if (!user) {
-      return res.status(401).json({ message: '使用者不存在或密碼輸入錯誤' });
+      return res.status(401).json({ status: false, message: '使用者不存在或密碼輸入錯誤' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: '使用者不存在或密碼輸入錯誤' });
+      return res.status(401).json({ status: false, message: '使用者不存在或密碼輸入錯誤' });
     }
 
     const token = generateJWT({ userId: user.id });
     res.status(200).json({
+      status: true,
       message: '登入成功',
       token,
       user: {
@@ -93,12 +94,13 @@ const userController = {
       });
 
       res.status(200).json({
+        status: true,
         message: '取得使用者成功',
         users
       });
     } catch (err) {
       console.error('getAllUsers error:', err);
-      res.status(500).json({ message: '伺服器錯誤' });
+      res.status(500).json({ status: false, message: '伺服器錯誤' });
     }
   }
 
