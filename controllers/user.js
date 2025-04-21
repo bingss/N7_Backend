@@ -78,10 +78,12 @@ const userController = {
     res.status(200).json({
       status: true,
       message: '登入成功',
-      token,
-      user: {
-        name: user.name,
-        role: user.role
+      data: {
+        token,
+        user: {
+          name: user.name,
+          role: user.role
+        }
       }
     });
   },
