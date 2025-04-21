@@ -78,14 +78,39 @@ const userController = {
     res.status(200).json({
       status: true,
       message: '登入成功',
-      token,
-      user: {
-        name: user.name,
-        role: user.role
+      data: {
+        token,
+        user: {
+          name: user.name,
+          role: user.role
+        }
       }
     });
   },
 
+  // 取得使用者資料
+  async getProfile(req, res, next) {
+    // 驗證時已取得user資料，所以不再次尋找
+    // const { id } = req.user
+    // const userRepository = dataSource.getRepository('User')
+    // const user = await userRepository.findOne({
+    //     select: ['serialNo','name', 'email','role'],
+    //     where: { id }
+    // })
+
+    res.status(200).json({
+        status: true,
+        message: '取得成功',
+        data: {
+          'serialNo':req.user.serialNo,
+          'name': req.user.name,
+          'email': req.user.email,
+          'role': req.user.role
+        }
+    })
+    return
+  },
+  
   // 取得所有使用者
   async getAllUsers(req, res) {
     try {
