@@ -113,17 +113,22 @@ const userController = {
 
   // 驗證登入狀態
   async getAuth(req, res) {
-    const { id } = req.user
-    const userRepository = dataSource.getRepository('User')
-    const user = await userRepository.findOne({
-        select: ['serialNo','name', 'email','role'],
-        where: { id }
-    })
+    try{
+      const { id } = req.user
+      const userRepository = dataSource.getRepository('User')
+      const user = await userRepository.findOne({
+          select: ['serialNo','name', 'email','role'],
+          where: { id }
+      })
 
-    res.status(200).json({
-        status: true,
-        message: '驗證成功'
-    })
+      res.status(200).json({
+          status: true,
+          message: '驗證成功'
+      })
+    } catch (err) {
+      console.error('getAuth error:', err);
+      res.status(500).json({ status: false, message: '伺服器錯誤' });
+    }
   },
   
   // 取得所有使用者
