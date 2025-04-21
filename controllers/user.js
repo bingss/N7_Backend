@@ -110,6 +110,21 @@ const userController = {
     })
     return
   },
+
+  // 驗證登入狀態
+  async getAuth(req, res) {
+    const { id } = req.user
+    const userRepository = dataSource.getRepository('User')
+    const user = await userRepository.findOne({
+        select: ['serialNo','name', 'email','role'],
+        where: { id }
+    })
+
+    res.status(200).json({
+        status: true,
+        message: '驗證成功'
+    })
+  },
   
   // 取得所有使用者
   async getAllUsers(req, res) {
@@ -253,18 +268,18 @@ module.exports = userController
 //           where: { id }
 //       })
 
-      res.status(200).json({
-          status: true,
-          message: '取得成功',
-          data: {
-            'serialNo':req.user.serialNo,
-            'name': req.user.name,
-            'email': req.user.email,
-            'role': req.user.role
-          }
-      })
-      return
-    },
+    //   res.status(200).json({
+    //       status: true,
+    //       message: '取得成功',
+    //       data: {
+    //         'serialNo':req.user.serialNo,
+    //         'name': req.user.name,
+    //         'email': req.user.email,
+    //         'role': req.user.role
+    //       }
+    //   })
+    //   return
+    // },
     // async putProfile(req, res, next) {
     //     const { id } = req.user;
     //     const { name } = req.body;
