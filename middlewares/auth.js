@@ -69,7 +69,7 @@ module.exports = ({
     }
     try {
       const verifyResult = await verifyJWT(token, secret)
-      const user = await userRepository.findOneBy({ id: verifyResult.id })
+      const user = await userRepository.findOneBy({ id: verifyResult.userId })
       if (!user) {
         next(generateError(PERMISSION_DENIED_STATUS_CODE, FailedMessageMap.invalid))
         return

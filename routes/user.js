@@ -12,10 +12,6 @@ const isAuth = require('../middlewares/auth')({
   logger
 })
 
-//fakeLogin：req中加入user，假裝已經登入使用
-// const login = require('../middlewares/login')
-const fakeLogin = require('../middlewares/fakeLogin');
-
 // 註冊 & 登入
 router.post('/signup', handleErrorAsync(userController.postSignup));
 router.post('/signin', handleErrorAsync(userController.postLogin));
@@ -23,12 +19,8 @@ router.post('/signin', handleErrorAsync(userController.postLogin));
 // GET 所有使用者
 router.get('/', userController.getAllUsers);
 
-// 取得使用者資料，fakeLogin傳入userid，假裝已經登入使用
-// router.get('/profile', isAuth, handleErrorAsync(userController.getProfile));
-router.get('/profile',
-  fakeLogin(dataSource.getRepository('User'), 'c2d905d7-a1b0-45dd-9f16-ac38a80ded7f', logger),
-  handleErrorAsync(userController.getProfile)
-);
+//  GET 取得使用者資料
+router.get('/profile', isAuth, handleErrorAsync(userController.getProfile));
 
 // router.put('/profile', isAuth, handleErrorAsync(userController.putProfile));
 
