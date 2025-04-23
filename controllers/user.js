@@ -147,8 +147,57 @@ const userController = {
       console.error('getAllUsers error:', err);
       res.status(500).json({ status: false, message: '伺服器錯誤' });
     }
-  }
+  },
 
+  async putProfile(req, res, next) {
+    try{
+      const { id } = req.user;
+      const { name } = req.body;
+    if (!isValidString(name)) {
+      next(appError('400', '欄位未填寫正確'))
+      return
+    }
+    const userRepo = dataSource.getRepository('User')
+    // 檢查使用者名稱未變更
+    
+    const findUser = await userRepo.findOne({
+      select:['name'],
+      where: { id }
+    })
+
+    const updateUser = await userRepo.update({
+      id,
+      name: user.name
+    }, {
+      name
+    })
+
+    if (updateUser.affected === 0) {
+      return res.status(400).json({ status: false, message: '更新使用者失敗' });
+    }
+
+    if(findUser.name === name) {
+      return res.status(400).json({ status: false, message: '使用者不存在或密碼輸入錯誤' });
+    }
+    
+    const result = await userRepo.findOne({
+      select: ['name'],
+      where: {
+        id
+      }
+    })
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: result
+      }
+    })
+    }catch(err){
+      console.error('putProfile error:', err);
+      res.status(500).json({ status: false, message: '伺服器錯誤' });
+    }        
+  }
 };
 
 module.exports = userController

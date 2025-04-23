@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const { dataSource } = require('../db/data-source')
 
 const PERMISSION_DENIED_STATUS_CODE = 401
 const FailedMessageMap = {
@@ -7,13 +8,13 @@ const FailedMessageMap = {
   missing: '尚未登入'
 }
 
-function generateError (status, message) {
+function generateError(status, message) {
   const error = new Error(message)
   error.status = status
   return error
 }
 
-function formatVerifyError (jwtError) {
+function formatVerifyError(jwtError) {
   let result
   switch (jwtError.name) {
     case 'TokenExpiredError':
@@ -26,7 +27,7 @@ function formatVerifyError (jwtError) {
   return result
 }
 
-function verifyJWT (token, secret) {
+function verifyJWT(token, secret) {
   return new Promise((resolve, reject) => {
     jwt.verify(token, secret, (error, decoded) => {
       if (error) {
@@ -82,3 +83,14 @@ module.exports = ({
     }
   }
 }
+
+
+// const currentUser = await dataSource.getRepository('User').findOne({
+//   where:{
+//     id: decode.id
+//   }
+//   if(!currentUser){
+//     next(appUser(401, '無效的token'))
+//     return
+//   }
+// })
