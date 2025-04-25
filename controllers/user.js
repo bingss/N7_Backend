@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 
 const { generateJWT } = require('../utils/jwtUtils');
 const { isValidPassword } = require('../utils/validUtils');
+const { isValidString } = require('../utils/validUtils');
 
 const userRepository = dataSource.getRepository('User');
 const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -167,7 +168,7 @@ const userController = {
 
     const updateUser = await userRepo.update({
       id,
-      name: user.name
+      //name: user.name
     }, {
       name
     })
