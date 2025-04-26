@@ -174,11 +174,11 @@ const userController = {
     })
 
     if (updateUser.affected === 0) {
-      return res.status(400).json({ status: false, message: '更新使用者失敗' });
+      return res.status(400).json({ status: false, message: '欄位未填寫正確' });
     }
 
     if(findUser.name === name) {
-      return res.status(400).json({ status: false, message: '使用者不存在或密碼輸入錯誤' });
+      return res.status(400).json({ status: false, message: '欄位未填寫正確，與變更前名稱重複' });
     }
     
     const result = await userRepo.findOne({
