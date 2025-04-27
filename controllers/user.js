@@ -190,7 +190,7 @@ const userController = {
     })
 
     res.status(200).json({
-      status: 'success',
+      status: true,
       data: {
         user: result
       }
@@ -210,7 +210,7 @@ const userController = {
       isUndefined(confirmNewPassword) || !isValidString(confirmNewPassword)) {
         // logger.warn('欄位未填寫正確')
         res.status(400).json({
-          status: 'failed',
+          status: false,
           message: '欄位未填寫正確'
         })
         return
@@ -218,7 +218,7 @@ const userController = {
       if (!isValidPassword(password) || !isValidPassword(newPassword) || !isValidPassword(confirmNewPassword)) {
         // logger.warn('密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字')
         res.status(400).json({
-          status: 'failed',
+          status: false,
           message: '密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字'
         })
         return
@@ -226,14 +226,14 @@ const userController = {
       if (newPassword === password) {
         // logger.warn('新密碼不能與舊密碼相同')
         res.status(400).json({
-          status: 'failed',
+          status: false,
           message: '新密碼不能與舊密碼相同'
         })
         return
       }else if (newPassword !== confirmNewPassword) {
         // logger.warn('新密碼與驗證新密碼不一致')
         res.status(400).json({
-          status: 'failed',
+          status: false,
           message: '新密碼與再次驗證密碼欄位不一致'
         })
         return
@@ -246,7 +246,7 @@ const userController = {
       const isMatch = await bcrypt.compare(password, existingUser.password)
       if (!isMatch) {
         res.status(400).json({
-          status: 'failed',
+          status: false,
           message: '密碼輸入錯誤'
         })
         return
@@ -260,13 +260,13 @@ const userController = {
       })
       if (updatedResult.affected === 0) {
         res.status(400).json({
-          status: 'failed',
+          status: false,
           message: '更新密碼失敗'
         })
         return
       }
       res.status(200).json({
-        status: 'success',
+        status: true,
         data: '密碼更新成功'
       })
     } catch (err) {
