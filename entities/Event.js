@@ -1,0 +1,99 @@
+const { EntitySchema } = require("typeorm");
+
+module.exports = new EntitySchema({
+  name: "Event",
+  tableName: "EVENT",
+  columns: {
+    id: {
+      primary: true,
+      type: "uuid",
+      generated: "uuid"
+    },
+    title: {
+      type: "varchar",
+      length: 100,
+      nullable: false
+    },
+    location: {
+      type: "varchar",
+      length: 100,
+      nullable: false
+    },
+    address: {
+      type: "varchar",
+      length: 100,
+      nullable: false
+    },
+    start_at: {
+      type: "timestamp",
+      nullable: false
+    },
+    end_at: {
+      type: "timestamp",
+      nullable: false
+    },
+    sale_start_at: {
+      type: "timestamp",
+      nullable: false
+    },
+    sale_end_at: {
+      type: "timestamp",
+      nullable: false
+    },
+    perform_group: {
+      type: "varchar",
+      length: 50,
+      nullable: true
+    },
+    description: {
+      type: "text"
+    },
+    cover_image: {
+      type: "varchar",
+      length: 2048,
+      nullable: false
+    },
+    section_image: {
+      type: "varchar",
+      length: 2048,
+      nullable: false
+    },
+    type: {
+      type: "varchar",
+      length: 50,
+      nullable: false
+    },
+    status: {
+      type: "varchar"
+    },
+    created_at: {
+      type: "timestamp",
+      createDate: true,
+      nullable: false
+    },
+    updated_at: {
+      type: "timestamp",
+      updateDate: true,
+      nullable: false
+    },
+    check_at: {
+      type: "timestamp",
+      nullable: true
+    },
+    user_id: {
+      type: "uuid",
+      nullable: false
+    }
+  },
+  relations: {
+    User: {
+      target: "User",
+      type: "many-to-one",
+      joinColumn: {
+        name: "user_id",
+        referencedColumnName: 'id',
+        foreignKeyConstraintName: 'event_user_id_fk'
+      }
+    }
+  }
+});

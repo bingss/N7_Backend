@@ -1,5 +1,4 @@
-//User.js
-const { EntitySchema } = require('typeorm')
+const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
   name: 'User',
@@ -12,12 +11,12 @@ module.exports = new EntitySchema({
     },
     name: {
       type: 'varchar',
-      length: 50,
+      length: 30,
       nullable: false
     },
     email: {
       type: 'varchar',
-      length: 320,
+      length: 32,
       nullable: false,
       unique: true
     },
@@ -29,12 +28,18 @@ module.exports = new EntitySchema({
     password: {
       type: 'varchar',
       length: 72,
-      nullable: false,
-      select: false
+      nullable: false
     },
-    serialNo: {
-      type: 'uuid',
-      generated: 'uuid'
+    status: { //'active', 'blocked'
+      type: 'varchar',
+      length: 10,
+      nullable: false,
+      default: 'active'
+    },
+    serial_no: {
+      type: 'varchar',
+      nullable: true,
+      unique: true,
     },
     created_at: {
       type: 'timestamp',
@@ -47,4 +52,4 @@ module.exports = new EntitySchema({
       nullable: false
     }
   }
-})
+});
