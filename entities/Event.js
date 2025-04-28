@@ -63,8 +63,12 @@ module.exports = new EntitySchema({
       length: 50,
       nullable: false
     },
-    status: {
-      type: "varchar"
+    status: { 
+      type: "varchar",
+      length: 10,
+      nullable: false,
+      default: 'checking',
+      comment: "'checking', 'approved', 'rejected'"
     },
     created_at: {
       type: "timestamp",

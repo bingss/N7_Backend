@@ -22,12 +22,13 @@ module.exports = new EntitySchema({
       type: "varchar",
       length: 10,
       nullable: false,
+      default: 'unused',
       comment: "'used', 'unused'"
     },
     qrcode_img: {
       type: "varchar",
       length: 2048,
-      nullable: false,
+      nullable: true,
       comment: "URL to QR code image"
     },
     created_at: {

@@ -11,7 +11,7 @@ module.exports = new EntitySchema({
     },
     section: {
       type: "varchar",
-      length: 10,
+      length: 20,
       nullable: false
     },
     total_seats: {

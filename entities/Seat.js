@@ -18,6 +18,7 @@ module.exports = new EntitySchema({
       type: "varchar",
       length: 10,
       nullable: false,
+      default: 'available',
       comment: "'available', 'sold', 'reserved'"
     },
     section_id: {
