@@ -20,13 +20,14 @@ router.post('/signin', handleErrorAsync(userController.postLogin));
 router.get('/', userController.getAllUsers);
 
 //  GET 取得使用者資料
-router.get('/profile', isAuth, handleErrorAsync(userController.getProfile));
+router.post('/profile', isAuth, handleErrorAsync(userController.getProfile));
 
 // router.put('/profile', isAuth, handleErrorAsync(userController.putProfile));
 
 // router.put('/password', isAuth, handleErrorAsync(userController.putPassword));
 
-router.get('/auth', isAuth, handleErrorAsync(userController.getAuth));
+// post 驗證登入狀態
+router.post('/auth', isAuth, handleErrorAsync(userController.getAuth));
 // router.get('/auth/refresh', isAuth, handleErrorAsync(userController.getRefresh));
 // router.get('/auth/logout', isAuth, handleErrorAsync(userController.getLogout));
 
