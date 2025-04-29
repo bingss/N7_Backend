@@ -247,7 +247,7 @@ const userController = {
       if (!isMatch) {
         res.status(400).json({
           status: false,
-          message: '密碼輸入錯誤'
+          message: '舊密碼輸入錯誤'
         })
         return
       }
