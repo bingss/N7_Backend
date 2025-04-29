@@ -21,7 +21,7 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-  bootcamp-fitness:
+  bootcamp-lumitix:
     build:
       dockerfile: Dockerfile
     env_file:

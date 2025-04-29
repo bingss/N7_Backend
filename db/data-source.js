@@ -1,11 +1,14 @@
 const { DataSource } = require('typeorm')
 const config = require('../config/index')
 
-// const CreditPackage = require('../entities/CreditPackages')
-// const Skill = require('../entities/Skill')
+
 const User = require('../entities/User')
-// const Coach = require('../entities/Coach')
-// const Course = require('../entities/Course')
+const Event = require('../entities/Event')
+const Order = require('../entities/Order')
+const Seat = require('../entities/Seat')
+const Section = require('../entities/Section')
+const Ticket = require('../entities/Ticket')
+const {UserSnSubscriber, TicketSnSubscriber, OrderSnSubscriber} = require('../subscribers/SerialNoSubscriber')
 
 const dataSource = new DataSource({
   type: 'postgres',
@@ -16,7 +19,19 @@ const dataSource = new DataSource({
   database: config.get('db.database'),
   synchronize: config.get('db.synchronize'),
   poolSize: 10,
-  entities: [User],
+  entities: [
+    User,
+    Event,
+    Order,
+    Seat,
+    Section,
+    Ticket
+  ],
+  subscribers: [
+    UserSnSubscriber,
+    TicketSnSubscriber,
+    OrderSnSubscriber,
+  ],
   ssl: config.get('db.ssl'),
   extra: {
     ssl: config.get('db.ssl') ? { rejectUnauthorized: false } : false

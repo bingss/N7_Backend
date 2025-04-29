@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 const { dataSource } = require('../db/data-source')
+const { verifyJWT } = require('../utils/jwtUtils')
 
 const PERMISSION_DENIED_STATUS_CODE = 401
 const FailedMessageMap = {
@@ -27,17 +28,6 @@ function formatVerifyError(jwtError) {
   return result
 }
 
-function verifyJWT(token, secret) {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, secret, (error, decoded) => {
-      if (error) {
-        reject(formatVerifyError(error))
-      } else {
-        resolve(decoded)
-      }
-    })
-  })
-}
 
 module.exports = ({
   secret,
@@ -69,7 +59,7 @@ module.exports = ({
       return
     }
     try {
-      const verifyResult = await verifyJWT(token, secret)
+      const verifyResult = await verifyJWT(token)
       const user = await userRepository.findOneBy({ id: verifyResult.userId })
       if (!user) {
         next(generateError(PERMISSION_DENIED_STATUS_CODE, FailedMessageMap.invalid))
