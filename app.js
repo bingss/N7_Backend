@@ -4,6 +4,7 @@ const path = require('path')
 const pinoHttp = require('pino-http')
 const logger = require('./utils/logger')('App')
 const userRouter = require('./routes/user')
+const organizerRouter = require('./routes/organizer')
 
 const app = express()
 app.use(cors())
@@ -30,6 +31,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/v1/users', userRouter)
+app.use('/api/v1/organizer', organizerRouter)
+
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
@@ -42,8 +45,8 @@ app.use((err, req, res, next) => {
     return
   }
   res.status(500).json({
-    status: 'error',
-    message: '伺服器錯誤'
+    status: false,
+    message: '發生伺服器錯誤'
   })
 })
 
