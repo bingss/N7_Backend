@@ -9,7 +9,7 @@ module.exports = new EntitySchema({
       type: "uuid",
       generated: "uuid"
     },
-    serial_no: {
+    serialNo: {
       type: 'varchar',
       nullable: false,
       unique: true

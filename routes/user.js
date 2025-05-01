@@ -26,7 +26,7 @@ router.put('/profile', isAuth, handleErrorAsync(userController.putProfile));
 
 router.put('/password', isAuth, handleErrorAsync(userController.putPassword));
 
-router.post('/auth', isAuth, handleErrorAsync(userController.getAuth));
+router.post('/auth', isAuth, handleErrorAsync(userController.postAuth));
 // router.get('/auth/refresh', isAuth, handleErrorAsync(userController.getRefresh));
 // router.get('/auth/logout', isAuth, handleErrorAsync(userController.getLogout));
 

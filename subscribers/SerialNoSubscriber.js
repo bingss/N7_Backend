@@ -13,8 +13,8 @@ const createSnSubscriber = (entityName, prefix, length = 8) => {
         return entityName;
       }
       async beforeInsert(event) {
-        if (!event.entity.serial_no) {
-          event.entity.serial_no = generateSerialNo(prefix, length);
+        if (!event.entity.serialNo) {
+          event.entity.serialNo = generateSerialNo(prefix, length);
         }
       }
     }
@@ -38,8 +38,8 @@ module.exports = {
 //   }
 
 //   async beforeInsert(event) {
-//     if (!event.entity.serial_no) {
-//       event.entity.serial_no = generateSerialNo("U", 8);
+//     if (!event.entity.serialNo) {
+//       event.entity.serialNo = generateSerialNo("U", 8);
 //     }
 //   }
 // }

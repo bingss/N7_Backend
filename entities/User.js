@@ -36,7 +36,7 @@ module.exports = new EntitySchema({
       nullable: false,
       default: 'active'
     },
-    serial_no: {
+    serialNo: {
       type: 'varchar',
       nullable: true,
       unique: true,

@@ -108,12 +108,12 @@ const userController = {
   },
 
   // 驗證登入狀態
-  async getAuth(req, res) {
+  async postAuth(req, res) {
     try{
       // const { id } = req.user
       // const userRepository = dataSource.getRepository('User')
       // const user = await userRepository.findOne({
-      //     select: ['serial_no','name', 'email','role'],
+      //     select: ['serialNo','name', 'email','role'],
       //     where: { id }
       // })
       res.status(200).json({
