@@ -8,7 +8,7 @@ const Order = require('../entities/Order')
 const Seat = require('../entities/Seat')
 const Section = require('../entities/Section')
 const Ticket = require('../entities/Ticket')
-const {UserSnSubscriber, TicketSnSubscriber, OrderSnSubscriber} = require('../subscribers/SerialNoSubscriber')
+const {UserSnSubscriber, TicketSnSubscriber, OrderSnSubscriber} = require('../subscribers/serialNoSubscriber')
 
 const dataSource = new DataSource({
   type: 'postgres',
