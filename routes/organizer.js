@@ -7,6 +7,7 @@ const handleErrorAsync = require('../utils/handleErrorAsync')
 const organizerController = require('../controllers/organizer')
 const { USER_ROLE } = require('../enums/index')
 const { checkImage } = require('../utils/imageUtils')
+
 const authRole = require('../middlewares/authRole')({
   allowedRoles: [USER_ROLE.ORGANIZER],
   logger
@@ -19,10 +20,10 @@ const isAuth = require('../middlewares/auth')({
 })
 
 
+// 提交新增活動
+router.post('/propose-event',isAuth, authRole, handleErrorAsync(organizerController.postEvent));
+
 // 上傳照片
 router.post('/uploadimage',isAuth, authRole, checkImage, handleErrorAsync(organizerController.postImage));
-
-// // 移動照片測試用
-router.post('/moveimage',isAuth, authRole, handleErrorAsync(organizerController.moveImage));
 
 module.exports = router

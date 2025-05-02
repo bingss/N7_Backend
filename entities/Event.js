@@ -51,12 +51,12 @@ module.exports = new EntitySchema({
     cover_image: {
       type: "varchar",
       length: 2048,
-      nullable: false
+      nullable: true
     },
     section_image: {
       type: "varchar",
       length: 2048,
-      nullable: false
+      nullable: true
     },
     type: {
       type: "varchar",
