@@ -20,10 +20,6 @@ module.exports = new EntitySchema({
       nullable: false,
       comment: "'credit_card', 'bank_transfer', 'line_pay'..."
     },
-    total_price: {
-      type: 'integer',
-      nullable: false
-    },
     created_at: {
       type: "timestamp",
       createDate: true,

@@ -1,5 +1,5 @@
 
-const config = require('../config/index')
+const path = require('path')
 const logger = require('./logger')('imageUtils')
 const appError = require('./appError')
 const formidable = require('formidable')
@@ -44,6 +44,7 @@ const checkImage = async (req, res, next) => {
     if( !files.image || !reqImgType  ) {
         logger.warn('[checkImageFile] 上傳欄位填寫錯誤')
         next( appError(ERROR_STATUS_CODE, '欄位填寫錯誤') )
+        return;
     }
     req.imgType = reqImgType
     req.imgFile = files.image[0]
@@ -52,11 +53,12 @@ const checkImage = async (req, res, next) => {
 
 const uploadImage = async (req) => {
     try{
-        const userSerial = req.user.serial_no
+        const userSerial = req.user.serialNo
         const timestamp = new Date().toISOString()
         const imgType = req.imgType
+        const ext = path.extname(req.imgFile.originalFilename); // 會包含 .，例如 .jpg、.png
 
-        const filename = `${imgType}-${timestamp}-${userSerial}-${req.imgFile.originalFilename}`
+        const filename = `${imgType}-${timestamp}-${userSerial}${ext}`
         const filePath = req.imgFile.filepath
         
         const remoteTempPath = `${TEMP_FOLDER_NAME}/${filename}`
@@ -93,7 +95,6 @@ const moveFinalImage = async (imgUrl, eventId) => {
     
         return imageUrl
     }catch (error) {
-        logger.error(`[moveFinalImage] ${error.message}`)
         throw appError(ERROR_STATUS_CODE, '移動圖片失敗')
     }
 }
@@ -106,7 +107,6 @@ const extractFilenameFromUrl = (imgUrl) => {
         const segments = pathname.split('/');
         return segments[segments.length - 1]; // 取得檔名
     } catch (err) {
-        logger.error(`[extractFilenameFromUrl] ${err.message}`)
         throw new Error('錯誤的圖片網址');
     }
 }
