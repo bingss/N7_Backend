@@ -11,6 +11,7 @@ const Ticket = require('../entities/Ticket')
 const {UserSnSubscriber, TicketSnSubscriber, OrderSnSubscriber} =require('../subscribers/serialNoSubscriber')
 
 
+
 const dataSource = new DataSource({
   type: 'postgres',
   host: config.get('db.host'),
