@@ -31,6 +31,11 @@ const isValidName = (value) => {
   return regex.test(value);
 }
 
+function isNotValidUuid(value){
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  return !uuidRegex.test(value)
+}
+
 const toDate = (val) => {
   return new Date(val.replace(' ', 'T'));
 }
@@ -51,7 +56,7 @@ const isValidUrl = (value) => {
   }
 }
 
-// 基本活動提交欄位驗證
+// 提交活動欄位驗證
 const proposeEventValid  = z.object({
   name: z.string({
     required_error: '活動名稱未填寫正確',invalid_type_error: '活動名稱未填寫正確'
@@ -88,9 +93,9 @@ const proposeEventValid  = z.object({
   description: z.string({
     required_error: '活活動介紹未填寫正確', invalid_type_error: '活動介紹未填寫正確'
   }).min(1, '活動介紹未填寫正確'),
-  type: z.array(z.string({
-    required_error: '活動類型未填寫正確', invalid_type_error: '活動類型未填寫正確'
-  })).min(1, '活動類型未填寫正確'),
+  type: z.string({
+    required_error: '活動類型未填寫正確',invalid_type_error: '活動類型未填寫正確'
+  }).min(1, '活動類型未填寫正確'),
   cover_image_url: z
     .any()
     .refine(
@@ -142,6 +147,7 @@ module.exports = {
   isNotValidString,
   isNotValidInteger,
   isValidName,
+  isNotValidUuid,
   proposeEventValid
 }
 

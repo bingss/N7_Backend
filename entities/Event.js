@@ -9,7 +9,7 @@ module.exports = new EntitySchema({
       type: "uuid",
       generated: "uuid"
     },
-    title: {
+    name: {
       type: "varchar",
       length: 100,
       nullable: false
@@ -40,7 +40,7 @@ module.exports = new EntitySchema({
       type: "timestamp",
       nullable: false
     },
-    perform_group: {
+    performance_group: {
       type: "varchar",
       length: 50,
       nullable: true
@@ -48,12 +48,12 @@ module.exports = new EntitySchema({
     description: {
       type: "text"
     },
-    cover_image: {
+    cover_image_url: {
       type: "varchar",
       length: 2048,
       nullable: true
     },
-    section_image: {
+    section_image_url: {
       type: "varchar",
       length: 2048,
       nullable: true

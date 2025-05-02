@@ -23,6 +23,9 @@ const isAuth = require('../middlewares/auth')({
 // 提交新增活動
 router.post('/propose-event',isAuth, authRole, handleErrorAsync(organizerController.postEvent));
 
+// 提交新增活動
+router.put('/edit-event/:eventId',isAuth, authRole, handleErrorAsync(organizerController.putEvent));
+
 // 上傳照片
 router.post('/uploadimage',isAuth, authRole, checkImage, handleErrorAsync(organizerController.postImage));
 

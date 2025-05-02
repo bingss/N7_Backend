@@ -95,7 +95,6 @@ const moveFinalImage = async (imgUrl, eventId) => {
     
         return imageUrl
     }catch (error) {
-        logger.error(`[moveFinalImage] ${error.message}`)
         throw appError(ERROR_STATUS_CODE, '移動圖片失敗')
     }
 }
@@ -108,7 +107,6 @@ const extractFilenameFromUrl = (imgUrl) => {
         const segments = pathname.split('/');
         return segments[segments.length - 1]; // 取得檔名
     } catch (err) {
-        logger.error(`[extractFilenameFromUrl] ${err.message}`)
         throw new Error('錯誤的圖片網址');
     }
 }
