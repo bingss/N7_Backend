@@ -8,7 +8,7 @@ const Order = require('../entities/Order')
 const Seat = require('../entities/Seat')
 const Section = require('../entities/Section')
 const Ticket = require('../entities/Ticket')
-const {UserSnSubscriber, TicketSnSubscriber, OrderSnSubscriber} = require('../subscribers/serialNoSubscriber')
+// const {UserSnSubscriber, TicketSnSubscriber, OrderSnSubscriber} =require('../subscribers/serialNoSubscriber')
 
 
 const dataSource = new DataSource({
@@ -28,11 +28,11 @@ const dataSource = new DataSource({
     Section,
     Ticket
   ],
-  subscribers: [
-    UserSnSubscriber,
-    TicketSnSubscriber,
-    OrderSnSubscriber,
-  ],
+  // subscribers: [
+  //   UserSnSubscriber,
+  //   TicketSnSubscriber,
+  //   OrderSnSubscriber,
+  // ],
   ssl: config.get('db.ssl'),
   extra: {
     ssl: config.get('db.ssl') ? { rejectUnauthorized: false } : false
