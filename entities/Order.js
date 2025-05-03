@@ -43,6 +43,7 @@ module.exports = new EntitySchema({
     User: {
       type: "many-to-one",
       target: "User",
+      inverseSide: "Order",
       joinColumn: {
         name: "user_id",
         referencedColumnName: 'id',
@@ -52,11 +53,17 @@ module.exports = new EntitySchema({
     Event: {
         type: "many-to-one",
         target: "Event",
+        inverseSide: "Order",
         joinColumn: {
           name: "event_id",
           referencedColumnName: 'id',
           foreignKeyConstraintName: 'order_event_id_fk'
         }
+    },
+    Ticket: {
+      type: "one-to-many",
+      target: "Ticket",
+      inverseSide: "Order"
     }
   }
 });

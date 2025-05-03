@@ -30,15 +30,21 @@ module.exports = new EntitySchema({
     }
   },
   relations: {
-    event: {
+    Event: {
       type: "many-to-one",
       target: "Event",
+      inverseSide: "Section",
       joinColumn: {
         name: "event_id",
         referencedColumnName: 'id',
         foreignKeyConstraintName: 'section_event_id_fk'
       },
       onDelete: "CASCADE"
+    },
+    Seat: {
+      type: "one-to-many",
+      target: "Seat",
+      inverseSide: "Section"
     }
   }
 });

@@ -27,15 +27,23 @@ module.exports = new EntitySchema({
     }
   },
   relations: {
-    section: {
+    Section: {
       type: "many-to-one",
       target: "Section",
+      inverseSide: "Seat",
       joinColumn: {
         name: "section_id",
         referencedColumnName: 'id',
         foreignKeyConstraintName: 'seat_section_id_fk'
       },
       onDelete: "CASCADE"
+    },
+    Ticket: {
+      type: "one-to-one",
+      target: "Ticket",
+      inverseSide: "Seat",
+      mappedBy: "Seat"
     }
+
   }
 });

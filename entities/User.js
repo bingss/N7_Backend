@@ -51,5 +51,17 @@ module.exports = new EntitySchema({
       updateDate: true,
       nullable: false
     }
+  },
+  relations: {
+    Event: {
+      type: "one-to-many",
+      target: "Event",
+      inverseSide: "User"
+    },
+    Order: {
+      type: "one-to-many",
+      target: "Order",
+      inverseSide: "User"
+    }
   }
 });

@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const dayjs = require('dayjs');
+const { toDate } = require('./timeUtils')
 
 const isValidString = (value) => {
   return typeof value === 'string' && value.trim() !== '';
@@ -36,10 +36,6 @@ function isNotValidUuid(value){
   return !uuidRegex.test(value)
 }
 
-const toDate = (val) => {
-  return new Date(val.replace(' ', 'T'));
-}
-
 const isValidDateTime = (value) => {
   const timeFormatRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
   if (!timeFormatRegex.test(value)) return false;
@@ -58,7 +54,7 @@ const isValidUrl = (value) => {
 
 // 提交活動欄位驗證
 const proposeEventValid  = z.object({
-  name: z.string({
+  title: z.string({
     required_error: '活動名稱未填寫正確',invalid_type_error: '活動名稱未填寫正確'
   }).min(1, '活動名稱未填寫正確'),
   location: z.string({
@@ -68,7 +64,7 @@ const proposeEventValid  = z.object({
     required_error: '地址未填寫正確', invalid_type_error: '地址未填寫正確'
   }).min(1, '地址未填寫正確'),
   start_at: z.string({
-    required_error: '活開始時間未填寫正確', invalid_type_error: '開始時間未填寫正確'
+    required_error: '開始時間未填寫正確', invalid_type_error: '開始時間未填寫正確'
   }).refine(isValidDateTime, {
     message: '開始時間未填寫正確'
   }),
@@ -91,7 +87,7 @@ const proposeEventValid  = z.object({
     required_error: '表演人員未填寫正確',invalid_type_error: '表演人員未填寫正確'
   }).min(1, '表演人員未填寫正確'),
   description: z.string({
-    required_error: '活活動介紹未填寫正確', invalid_type_error: '活動介紹未填寫正確'
+    required_error: '活動介紹未填寫正確', invalid_type_error: '活動介紹未填寫正確'
   }).min(1, '活動介紹未填寫正確'),
   type: z.string({
     required_error: '活動類型未填寫正確',invalid_type_error: '活動類型未填寫正確'
@@ -135,7 +131,7 @@ const proposeEventValid  = z.object({
     return uniqueNames.size == sectionNames.length;
   }, {
     path: ['section_name'],
-    message: '分區名稱未填寫正確重複',
+    message: '分區名稱重複',
   });
 
 
