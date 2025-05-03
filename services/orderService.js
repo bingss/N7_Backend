@@ -75,6 +75,7 @@ const getSingleOrderData = async ( orgUserId, eventId ) => {
         .leftJoin('section.Seat', 'seat')
         .leftJoin('seat.Ticket', 'ticket')
         .where('event.id = :eventId', { eventId })
+        .andWhere('event.user_id = :orgUserId', { orgUserId })
         .select([
             'event.id AS event_id',
             'event.title AS title',
@@ -132,8 +133,6 @@ const getSingleOrderData = async ( orgUserId, eventId ) => {
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
 } 
-
-
 
 module.exports = {
     getOrdersData,

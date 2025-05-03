@@ -18,6 +18,10 @@ module.exports = new EntitySchema({
       type: "numeric",
       comment: "Actual price paid for this ticket"
     },
+    type: {
+      type: 'varchar',
+      nullable: false,
+    },
     status: {
       type: "varchar",
       length: 10,
