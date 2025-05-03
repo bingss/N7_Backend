@@ -27,7 +27,7 @@ const postEvent = async (req, res, next) => {
         message: "新增成功",
         data: {
           id: savedEvent.id,
-          name: savedEvent.name,
+          title: savedEvent.title,
           cover_image_url: newCoverImgUrl,
           section_image_url: newSectionImgUrl,
           created_at: savedEvent.created_at,
@@ -60,7 +60,7 @@ const putEvent = async (req, res, next) => {
         message: "編輯成功",
         data: {
           id: savedEvent.id,
-          name: savedEvent.name,
+          title: savedEvent.title,
           cover_image_url: savedEvent.cover_image_url,
           section_image_url: savedEvent.section_image_url,
           created_at: savedEvent.created_at,

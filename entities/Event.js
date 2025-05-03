@@ -9,7 +9,7 @@ module.exports = new EntitySchema({
       type: "uuid",
       generated: "uuid"
     },
-    name: {
+    title: {
       type: "varchar",
       length: 100,
       nullable: false

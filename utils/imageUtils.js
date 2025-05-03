@@ -33,8 +33,8 @@ const checkImage = async (req, res, next) => {
         [fields, files] = await form.parse(req)
     }catch (error) {
         if(error.code === formidableErrors.biggerThanMaxFileSize) {
-            logger.warn('[checkImageFile] 檔案大小超過限制')
-            next( appError(ERROR_STATUS_CODE, '檔案大小超過限制') )
+            logger.warn('[checkImageFile] 檔案大小超過限制5mb')
+            next( appError(ERROR_STATUS_CODE, '檔案大小超過限制5mb') )
         }
         console.log(`[checkImageFile] ${error.message}`)
         next( appError(ERROR_STATUS_CODE, '欄位填寫錯誤') )

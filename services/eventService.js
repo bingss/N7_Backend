@@ -3,7 +3,7 @@ const logger = require('../utils/logger')('Organizer')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { moveFinalImage } = require('../utils/imageUtils')
-
+const ERROR_STATUS_CODE = 400;
 
 const createNewEvent = async (newEventData, userId) => {
     return dataSource.transaction(async (manager) => {
@@ -12,7 +12,7 @@ const createNewEvent = async (newEventData, userId) => {
         //儲存活動資料
         const newEvent = eventRepository.create({
             user_id: userId,
-            name:newEventData.name,
+            title:newEventData.title,
             location: newEventData.location,
             address: newEventData.address,
             start_at: newEventData.start_at,
@@ -25,7 +25,7 @@ const createNewEvent = async (newEventData, userId) => {
         })
         const savedEvent = await eventRepository.save(newEvent)
         if (!savedEvent) {
-            throw appError(400, '新增活動失敗')
+            throw appError(ERROR_STATUS_CODE, '新增活動失敗')
         }
 
         // 儲存分區資料
@@ -39,6 +39,7 @@ const createNewEvent = async (newEventData, userId) => {
             });
         });
         const savedSection = await sectionRepository.save(newSections);
+
         // 移動圖片位置並儲存圖片資料
         let newCoverImgUrl = null
         let newSectionImgUrl = null
@@ -79,7 +80,7 @@ const updateEvent = async (newEventData, eventId) => {
         //比對更新資料
         const originalEventData = await eventRepository.findOne({
             select: [
-                'name',
+                'title',
                 'location',
                 'address',
                 'start_at',
@@ -97,7 +98,7 @@ const updateEvent = async (newEventData, eventId) => {
         })
 
         if (!originalEventData) {
-            throw appError(400, '更新活動失敗')
+            throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
 
         originalEventData.start_at = formatDatabaseDate(originalEventData.start_at)
@@ -116,14 +117,14 @@ const updateEvent = async (newEventData, eventId) => {
               changedData
             );
             if (updatedEventResult.affected === 0) {
-                throw appError(400, '更新活動失敗')
+                throw appError(ERROR_STATUS_CODE, '更新活動失敗')
             }
         }
 
         //刪除所有分區再擺上去
         const delSectionResult = await sectionRepository.delete({ event_id : eventId })
         if (delSectionResult.affected === 0) {
-            throw appError(400, '更新活動失敗')
+            throw appError(ERROR_STATUS_CODE, '更新活動失敗')
         }
         // 儲存分區資料
         const newSections = newEventData.sections.map((section) => {
@@ -137,13 +138,13 @@ const updateEvent = async (newEventData, eventId) => {
         const savedSection = await sectionRepository.save(newSections);
         //沒更新活動資料又沒更新分區資料成功
         if ( !savedSection ) {
-            throw appError(400, '更新活動失敗')
+            throw appError(ERROR_STATUS_CODE, '更新活動失敗')
         }
 
         const savedEvent = await eventRepository.findOne({
             select: [
                 'id',
-                'name',
+                'title',
                 'location',
                 'cover_image_url',
                 'section_image_url',
