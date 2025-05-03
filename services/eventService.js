@@ -3,6 +3,7 @@ const logger = require('../utils/logger')('Organizer')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { moveFinalImage } = require('../utils/imageUtils')
+const { formatDatabaseDate } = require('../utils/timeUtils')
 const ERROR_STATUS_CODE = 400;
 
 const createNewEvent = async (newEventData, userId) => {
@@ -72,7 +73,7 @@ const createNewEvent = async (newEventData, userId) => {
     });
 } 
 
-const updateEvent = async (newEventData, eventId) => {
+const updateEvent = async (newEventData, eventId, userId) => {
     return dataSource.transaction(async (manager) => {
         const eventRepository = manager.getRepository('Event')
         const sectionRepository = manager.getRepository('Section')
@@ -93,7 +94,8 @@ const updateEvent = async (newEventData, eventId) => {
                 'description',
                 'type'],
             where: {
-                id : eventId
+                id : eventId,
+                user_id : userId
             }
         })
 
@@ -106,7 +108,7 @@ const updateEvent = async (newEventData, eventId) => {
         originalEventData.sale_start_at = formatDatabaseDate(originalEventData.sale_start_at)
         originalEventData.sale_end_at = formatDatabaseDate(originalEventData.sale_end_at)
 
-        const changedData = await getChangedData(originalEventData, newEventData, eventId)
+        const changedData = await compareChangedData(originalEventData, newEventData, eventId)
 
         
         let updatedEventResult = 0
@@ -162,7 +164,7 @@ const updateEvent = async (newEventData, eventId) => {
     });
 } 
 
-async function getChangedData(originalData, newData, eventId) {
+async function compareChangedData(originalData, newData, eventId) {
     const changedData = {};
 
     // 遍歷新資料的所有欄位
@@ -186,21 +188,72 @@ async function getChangedData(originalData, newData, eventId) {
     return changedData;
 }
 
-function formatDatabaseDate(dbDateString) {
-    // 資料庫的日期字串:"Thu May 01 2025 20:00:00 GMT+0800 (台北標準時間)"
-    //轉為前端傳來的格式 "2025-05-01 20:00"
-    const date = new Date(dbDateString); 
+const getEditEventData = async ( orgUserId, eventId ) => {
+    try {
+        const eventRepository = dataSource.getRepository('Event')
+        const eventWithSections = await eventRepository
+            .createQueryBuilder('event')
+            .leftJoin('event.Section', 'section')
+            .where('event.id = :eventId', { eventId })
+            .andWhere('event.user_id = :userId', { userId: orgUserId })
+            .select([
+                'event.id AS event_id',
+                'event.title AS title',
+                'event.location AS location',
+                'event.address AS address',
+                'event.start_at AS start_at',
+                'event.end_at AS end_at',
+                'event.sale_start_at AS sale_start_at',
+                'event.sale_end_at AS sale_end_at',
+                'event.performance_group AS performance_group',
+                'event.description AS description',
+                'event.type AS type',
+                'event.cover_image_url AS cover_image_url',
+                'event.section_image_url AS section_image_url',
+            
+                'section.id AS section_id',
+                'section.section AS section_name',
+                'section.price_default AS price',
+                'section.total_seats AS ticket_total'
+            ])
+            .getRawMany();
+        if (!eventWithSections || eventWithSections.length === 0) {
+            throw appError(ERROR_STATUS_CODE, '活動不存在')
+        }
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); 
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+        const eventInfo = {
+            id: eventWithSections[0].event_id,
+            title: eventWithSections[0].title,
+            location: eventWithSections[0].location,
+            address: eventWithSections[0].address,
+            start_at: eventWithSections[0].start_at,
+            end_at: eventWithSections[0].end_at,
+            sale_start_at: eventWithSections[0].sale_start_at,
+            sale_end_at: eventWithSections[0].sale_end_at,
+            performance_group: eventWithSections[0].performance_group,
+            description: eventWithSections[0].description,
+            type: eventWithSections[0].type,
+            cover_image_url: eventWithSections[0].cover_image_url,
+            section_image_url: eventWithSections[0].section_image_url,
+            sections: eventWithSections.map(row => ({
+              id: row.section_id,
+              section_name: row.section_name,
+              price: row.price,
+              ticket_total: row.ticket_total
+            }))
+          };
 
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
+        return eventInfo
+    }catch (error) {
+        if (error.status) {
+            throw error;
+        }
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+} 
 
 module.exports = {
     createNewEvent,
+    getEditEventData,
     updateEvent,
 }

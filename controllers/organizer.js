@@ -3,9 +3,12 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('Organizer')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
-const { createNewEvent,updateEvent } = require('../services/eventService')
+const { createNewEvent,updateEvent,getEditEventData } = require('../services/eventService')
+const { getOrdersData,getSingleOrderData } = require('../services/orderService')
 const { uploadImage } = require('../utils/imageUtils')
 const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
+
+const ERROR_STATUS_CODE = 400;
 
 const postEvent = async (req, res, next) => {
     //欄位驗證
@@ -13,7 +16,7 @@ const postEvent = async (req, res, next) => {
     if (!result.success) {
       const errorMessages = result.error.issues.map(issue => issue.message);
       logger.error(`[postEvent]欄位錯誤：${errorMessages}`);
-      next( appError(400, errorMessages ) );
+      next( appError(ERROR_STATUS_CODE, errorMessages ) );
       return;
     }
 
@@ -41,19 +44,19 @@ const putEvent = async (req, res, next) => {
     //欄位驗證
     const { eventId } = req.params
     if (isUndefined(eventId) || isNotValidString(eventId) || isNotValidUuid(eventId)) {
-        next(appError(400, '欄位未填寫正確'))
+        next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
         return
     }
     const result = proposeEventValid.safeParse(req.body);
     if (!result.success) {
       const errorMessages = result.error.issues.map(issue => issue.message);
       logger.error(`[postEvent]欄位錯誤：${errorMessages}`);
-      next( appError(400, errorMessages ) );
+      next( appError(ERROR_STATUS_CODE, errorMessages ) );
       return;
     }
 
-    //新增活動
-    const {savedEvent} = await updateEvent(result.data, eventId)
+    //編輯活動
+    const {savedEvent} = await updateEvent(result.data, eventId, req.user.id)
 
     res.status(201).json({
         status: true,
@@ -70,9 +73,52 @@ const putEvent = async (req, res, next) => {
     })
 }
 
+const getOrders = async (req, res, next) => {
+    const orgUserId = req.user.id
+    const groupedOrders = await getOrdersData(orgUserId)
+
+    res.status(200).json({
+        status: true,
+        message: "取得活動列表成功",
+        data: groupedOrders
+    })
+}
+
+const getSingleOrder = async (req, res, next) => {
+    const { eventId } = req.params
+    if (isUndefined(eventId) || isNotValidString(eventId) || isNotValidUuid(eventId)) {
+        next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
+        return
+    }
+    const orgUserId = req.user.id
+    const order = await getSingleOrderData(orgUserId, eventId)
+
+    res.status(200).json({
+        status: true,
+        message: "取得活動列表成功",
+        data: order
+    })
+}
+
+const getEditEvent = async (req, res, next) => {
+    const { eventId } = req.params
+    if (isUndefined(eventId) || isNotValidString(eventId) || isNotValidUuid(eventId)) {
+        next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
+        return
+    }
+    const orgUserId = req.user.id
+    const order = await getEditEventData(orgUserId, eventId)
+
+    res.status(200).json({
+        status: true,
+        message: "取得資料成功",
+        data: order
+    })
+}
+
 const postImage = async  (req, res, next)=> {
     const imageUrl = await uploadImage(req)
-    res.status(200).json({
+    res.status(201).json({
         status: 'success',
         data: {
             image_url: imageUrl
@@ -83,5 +129,8 @@ const postImage = async  (req, res, next)=> {
 module.exports = {
     postEvent,
     putEvent,
+    getOrders,
+    getSingleOrder,
+    getEditEvent,
     postImage
 }

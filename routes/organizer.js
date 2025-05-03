@@ -23,10 +23,19 @@ const isAuth = require('../middlewares/auth')({
 // 提交新增活動
 router.post('/propose-event',isAuth, authRole, handleErrorAsync(organizerController.postEvent));
 
-// 提交新增活動
+// 提交編輯活動
 router.put('/edit-event/:eventId',isAuth, authRole, handleErrorAsync(organizerController.putEvent));
 
 // 上傳照片
 router.post('/uploadimage',isAuth, authRole, checkImage, handleErrorAsync(organizerController.postImage));
+
+// 取得活動訂單列表
+router.get('/orders',isAuth, authRole, handleErrorAsync(organizerController.getOrders));
+
+// 取得單一活動詳細內容
+router.get('/orders/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getSingleOrder));
+
+// 取得編輯之活動資訊
+router.get('/edit-event/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEditEvent));
 
 module.exports = router

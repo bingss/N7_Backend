@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const dayjs = require('dayjs');
+const { toDate } = require('./timeUtils')
 
 const isValidString = (value) => {
   return typeof value === 'string' && value.trim() !== '';
@@ -34,10 +34,6 @@ const isValidName = (value) => {
 function isNotValidUuid(value){
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   return !uuidRegex.test(value)
-}
-
-const toDate = (val) => {
-  return new Date(val.replace(' ', 'T'));
 }
 
 const isValidDateTime = (value) => {

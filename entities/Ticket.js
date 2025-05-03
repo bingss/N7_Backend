@@ -52,18 +52,20 @@ module.exports = new EntitySchema({
   },
   relations: {
     Seat: {
-      type: "many-to-one",
+      type: "one-to-one",
       target: "Seat",
       joinColumn: {
         name: "seat_id",
         referencedColumnName: 'id',
         foreignKeyConstraintName: 'ticket_seat_id_fk'
       },
+      inverseSide: "Ticket",
       onDelete: "CASCADE"
     },
     Order: {
       type: "many-to-one",
       target: "Order",
+      inverseSide: "Ticket",
       joinColumn: {
         name: "order_id",
         referencedColumnName: 'id',
