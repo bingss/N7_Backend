@@ -2,6 +2,7 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
+const { generateTicketQRCode } = require('../utils/qrcodeUtils')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -27,6 +28,7 @@ const getTicketsData = async ( userId ) => {
             ])
             .getRawMany();
         
+            //資料待整理
     
         return tickets
     }catch (error) {
@@ -56,6 +58,7 @@ const getSingleTicketData = async ( userId, orderId ) => {
                 "user.name AS user_name",
                 "user.email AS user_email",
 
+                "event.id AS event_id",
                 "event.title AS title",
                 "event.location AS location",
                 "event.address AS address",
@@ -63,6 +66,7 @@ const getSingleTicketData = async ( userId, orderId ) => {
                 "event.end_at AS end_at",
                 "event.cover_image_url AS cover_image_url",
 
+                "ticket.id AS ticket_id",
                 "ticket.serialNo AS ticket_no",
                 "section.section AS section_name",
                 "seat.seat_number AS seat_no",
@@ -91,17 +95,29 @@ const getSingleTicketData = async ( userId, orderId ) => {
                 end_at: base.event_end_at,
                 cover_image_url: base.event_cover_image_url
             },
-            tickets: rawTicket
+            tickets: await Promise.all(rawTicket
                 .filter(row => row.status === 'unused')
-                .map((ticket) => ({
+                .map(async (ticket) => ({
                         ticket_no: ticket.ticket_no,
                         seat_no: `${ticket.section_name}區${ticket.seat_no}號`,
                         price: ticket.ticket_price,
                         type: ticket.ticket_type,
-                        qrcode_image_url: ticket.qrcode_image_url
-                })),
+                        qrcode_image: await generateTicketQRCode({
+                            ticket_id: ticket.ticket_id,
+                            user_id: userId,
+                            event_id: base.event_id,}),
+                }))),
         };
-
+        // await Promise.all(eventWithSections.map(async row => ({
+        //     id: row.section_id,
+        //     section_name: row.section_name,
+        //     price: row.price,
+        //     ticket_total: row.ticket_total,
+        //     ticket_purchaced: await generateTicketQRCode({
+        //       ticket_id: eventWithSections[0].event_id,
+        //       user_id: eventWithSections[0].event_id,
+        //       event_id: eventWithSections[0].event_id}),
+        //   })))
         return formatTicket
     }catch (error) {
         if (error.status) {
