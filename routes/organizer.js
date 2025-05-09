@@ -30,10 +30,10 @@ router.put('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerContro
 router.post('/upload_image',isAuth, authRole, checkImage, handleErrorAsync(organizerController.postImage));
 
 // 22.取得活動訂單列表
-router.get('/events',isAuth, authRole, handleErrorAsync(organizerController.getOrders));
+router.get('/events',isAuth, authRole, handleErrorAsync(organizerController.getEvents));
 
 // 23.取得單一活動詳細內容
-router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getSingleOrder));
+router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEvent));
 
 // 25.取得編輯之活動資訊
 router.get('/edit-event/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEditEvent));
