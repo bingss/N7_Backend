@@ -20,22 +20,22 @@ const isAuth = require('../middlewares/auth')({
 })
 
 
-// 提交新增活動
+// 19.提交新增活動
 router.post('/propose-event',isAuth, authRole, handleErrorAsync(organizerController.postEvent));
 
-// 提交編輯活動
-router.put('/edit-event/:eventId',isAuth, authRole, handleErrorAsync(organizerController.putEvent));
+// 20.提交編輯活動
+router.put('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.putEvent));
 
-// 上傳照片
-router.post('/uploadimage',isAuth, authRole, checkImage, handleErrorAsync(organizerController.postImage));
+// 21.上傳照片
+router.post('/upload_image',isAuth, authRole, checkImage, handleErrorAsync(organizerController.postImage));
 
-// 取得活動訂單列表
-router.get('/orders',isAuth, authRole, handleErrorAsync(organizerController.getOrders));
+// 22.取得活動訂單列表
+router.get('/events',isAuth, authRole, handleErrorAsync(organizerController.getEvents));
 
-// 取得單一活動詳細內容
-router.get('/orders/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getSingleOrder));
+// 23.取得單一活動詳細內容
+router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEvent));
 
-// 取得編輯之活動資訊
+// 25.取得編輯之活動資訊
 router.get('/edit-event/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEditEvent));
 
 module.exports = router
