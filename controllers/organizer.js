@@ -3,8 +3,7 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('Organizer')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
-const { createNewEvent,updateEvent,getEditEventData } = require('../services/eventService')
-const { getOrdersData,getSingleOrderData } = require('../services/orderService')
+const { createNewEvent,updateEvent,getEditEventData,getOrgEventsData,getOneOrgEventData } = require('../services/eventService')
 const { uploadImage } = require('../utils/imageUtils')
 const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
 
@@ -73,9 +72,9 @@ const putEvent = async (req, res, next) => {
     })
 }
 
-const getOrders = async (req, res, next) => {
+const getEvents = async (req, res, next) => {
     const orgUserId = req.user.id
-    const groupedOrders = await getOrdersData(orgUserId)
+    const groupedOrders = await getOrgEventsData(orgUserId)
 
     res.status(200).json({
         status: true,
@@ -84,14 +83,14 @@ const getOrders = async (req, res, next) => {
     })
 }
 
-const getSingleOrder = async (req, res, next) => {
+const getEvent = async (req, res, next) => {
     const { eventId } = req.params
     if (isUndefined(eventId) || isNotValidString(eventId) || isNotValidUuid(eventId)) {
         next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
         return
     }
     const orgUserId = req.user.id
-    const order = await getSingleOrderData(orgUserId, eventId)
+    const order = await getOneOrgEventData(orgUserId, eventId)
 
     res.status(200).json({
         status: true,
@@ -129,8 +128,8 @@ const postImage = async  (req, res, next)=> {
 module.exports = {
     postEvent,
     putEvent,
-    getOrders,
-    getSingleOrder,
+    getEvents,
+    getEvent,
     getEditEvent,
     postImage
 }
