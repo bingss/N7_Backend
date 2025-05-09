@@ -36,6 +36,6 @@ router.get('/events',isAuth, authRole, handleErrorAsync(organizerController.getO
 router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getSingleOrder));
 
 // 25.取得編輯之活動資訊
-router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEditEvent));
+router.get('/edit-event/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEditEvent));
 
 module.exports = router
