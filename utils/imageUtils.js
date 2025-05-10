@@ -6,7 +6,7 @@ const formidable = require('formidable')
 const formidableErrors = require('formidable').errors;
 
 
-const{firebaseAdmin,bucket,isFirebaseEnabled} = require('./firebase')
+const{firebaseAdmin,bucket,isFirebaseEnabled} = require('./firebaseUtils')
 
 const TEMP_FOLDER_NAME = 'temp'
 const ERROR_STATUS_CODE = 400;
