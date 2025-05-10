@@ -170,6 +170,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
         const eventWithSections = await eventRepository
             .createQueryBuilder('event')
             .leftJoin('event.Section', 'section')
+            .leftJoin('section.Seat', 'seat')
             .where('event.id = :eventId', { eventId })
             .andWhere('event.user_id = :userId', { userId: orgUserId })
             .select([
@@ -191,9 +192,11 @@ const getEditEventData = async ( orgUserId, eventId ) => {
                 'section.id AS section_id',
                 'section.section AS section_name',
                 'section.price_default AS price',
-                'section.total_seats AS ticket_total'
+                'COUNT(seat.id) AS ticket_total'
             ])
+            .groupBy('event.id, section.id')
             .getRawMany();
+
         if (!eventWithSections || eventWithSections.length === 0) {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
@@ -220,7 +223,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
               id: row.section_id,
               section_name: row.section_name,
               price: row.price,
-              ticket_total: row.ticket_total
+              ticket_total: parseInt(row.ticket_total, 10)
             }))
           };
 
@@ -236,11 +239,10 @@ const getEditEventData = async ( orgUserId, eventId ) => {
 const getOrgEventsData = async ( orgUserId ) => {
     try {
         const eventRepository = dataSource.getRepository('Event')
-        const eventWithOrders = await eventRepository
+        const orgEvents = await eventRepository
             .createQueryBuilder("event")
-            .leftJoin("event.Order", "order")
-            .leftJoin("order.Ticket", "ticket")
             .leftJoin("event.Section", "section")
+            .leftJoin('section.Seat', 'seat')
             .where("event.user_id = :orgUserId", { orgUserId: orgUserId })
             .select([
                 "event.id AS id",
@@ -248,14 +250,14 @@ const getOrgEventsData = async ( orgUserId ) => {
                 "event.start_at AS start_at",
                 "event.end_at AS end_at",
                 "event.status AS status",
-                "SUM(section.total_seats) AS ticket_total",
-                "COUNT(ticket.id) AS ticket_purchaced"
+                "COUNT(seat.id) AS ticket_total",
+                "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
             ])
             .groupBy("event.id")
             .getRawMany();
     
         // 依照結束時間、status分類          
-        const classifiedOrders = eventWithOrders.reduce((result, event) => {
+        const classifiedOrders = orgEvents.reduce((result, event) => {
 
             const { status, ...rest  } = event;
             const noStatusOrders = { 
@@ -302,7 +304,6 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
         .createQueryBuilder('section')
         .leftJoin('section.Event', 'event')
         .leftJoin('section.Seat', 'seat')
-        .leftJoin('seat.Ticket', 'ticket')
         .where('event.id = :eventId', { eventId })
         .andWhere('event.user_id = :orgUserId', { orgUserId })
         .select([
@@ -319,15 +320,15 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
             'event.type AS type',
             'event.cover_image_url AS cover_image_url',
             'event.section_image_url AS section_image_url',
+            'event.status AS status',
 
             'section.id AS section_id',
             'section.section AS section_name',
             'section.price_default AS price',
-            'section.total_seats AS ticket_total',
-            'COUNT(ticket.id) AS ticket_purchaced'
+            "COUNT(seat.id) AS ticket_total",
+            "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
         ])
-        .groupBy('event.id')
-        .addGroupBy('section.id')
+        .groupBy('event.id, section.id')
         .getRawMany();
 
         const eventInfo = {
@@ -344,11 +345,12 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
             type: eventWithSections[0].type,
             cover_image_url: eventWithSections[0].cover_image_url,
             section_image_url: eventWithSections[0].section_image_url,
+            status:eventWithSections[0].status,
             sections: eventWithSections.map(row => ({
               id: row.section_id,
               section_name: row.section_name,
               price: row.price,
-              ticket_total: row.ticket_total,
+              ticket_total: parseInt(row.ticket_total),
               ticket_purchaced: parseInt(row.ticket_purchaced, 10)
             }))
         };

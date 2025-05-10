@@ -14,20 +14,17 @@ const createTestOrder = async (orderData, userId) => {
         const ticketRepository = manager.getRepository('Ticket')
         const sectionRepository = manager.getRepository('Section')
         
-        //欄位檢查，正式版需再增加
+        //欄位檢查，正式版需再增加，檢查活動起訖時間
         if(orderData.tickets.length === 0){
             throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤')
         }
-
         const eventStatus = await eventRepository.findOne({
                     where: {  id: orderData.event_id },
                     select: [ 'status' ],
                 });
-
         if (!eventStatus) {
             throw appError(ERROR_STATUS_CODE, `訂單資訊輸入錯誤`)
         }
-
         if(eventStatus.status != EVENT_STAUSUS.APPROVED){
             throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
         }
@@ -62,11 +59,11 @@ const createTestOrder = async (orderData, userId) => {
         for (const [sectionId, count] of sectionDemandMap.entries()) {
 
             const sectionData = await sectionRepository.findOne({
-                        where: {  id: sectionId },
+                        where: {  id: sectionId, event_id : orderData.event_id },
                         select: [ 'section' ],
                     });
             if (!sectionData) {
-                throw appError(ERROR_STATUS_CODE, `區域資訊輸入錯誤`)
+                throw appError(ERROR_STATUS_CODE, `活動或資訊輸入錯誤`)
             }
 
             const availableSeats = await seatRepository

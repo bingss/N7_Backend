@@ -18,12 +18,13 @@ const isAuth = require('../middlewares/auth')({
   logger
 })
 
+// 
 router.post('/postTestData', isAuth, authRole, handleErrorAsync(ticketsController.postTestOrder))
 
-// 使用者取得票券列表
+// 16.使用者取得訂單(票券)列表
 router.get('/',isAuth, authRole, handleErrorAsync(ticketsController.getOrders));
 
-// 使用者取得單一票券詳情
+// 17.使用者取得單一訂單(票券)詳情
 router.get('/:orderId',isAuth, authRole, handleErrorAsync(ticketsController.getOneOrder));
 
 

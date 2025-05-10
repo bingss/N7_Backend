@@ -42,7 +42,9 @@ async function generateSectionAndSeat(manager, newEventData, eventId){
         let allSeats = [];
         savedSections.forEach((section) => {
             
-            const seats = Array.from({ length: section.total_seats }, (_, index) => {
+            const { ticket_total } = newEventData.sections.find( (eventSection) => eventSection.section_name === section.section)
+            console.log(ticket_total)
+            const seats = Array.from({ length: ticket_total }, (_, index) => {
                 return manager.getRepository('Seat').create({
                     seat_number: String(index + 1),      // 從 1 開始編號
                     section_id: section.id,              // 對應 section
@@ -50,7 +52,6 @@ async function generateSectionAndSeat(manager, newEventData, eventId){
             });
             allSeats.push(...seats);
         });
-        console.log(allSeats)
         const savedSeats = await manager.getRepository('Seat').save(allSeats);
 
         return {savedSections,savedSeats}
