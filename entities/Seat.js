@@ -10,8 +10,7 @@ module.exports = new EntitySchema({
       generated: "uuid"
     },
     seat_number: {
-      type: "varchar",
-      length: 10,
+      type: 'integer',
       nullable: false
     },
     status: {
