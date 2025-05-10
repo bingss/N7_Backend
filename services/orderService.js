@@ -18,16 +18,25 @@ const createTestOrder = async (orderData, userId) => {
         if(orderData.tickets.length === 0){
             throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤')
         }
-        const eventStatus = await eventRepository.findOne({
+        const ordeEvent = await eventRepository.findOne({
                     where: {  id: orderData.event_id },
-                    select: [ 'status' ],
+                    select: [ 'status','sale_start_at','sale_end_at' ],
                 });
-        if (!eventStatus) {
-            throw appError(ERROR_STATUS_CODE, `訂單資訊輸入錯誤`)
+        if (!ordeEvent) {
+            throw appError(ERROR_STATUS_CODE, `找無訂單輸入之活動`)
         }
-        if(eventStatus.status != EVENT_STAUSUS.APPROVED){
+        if(ordeEvent.status != EVENT_STAUSUS.APPROVED){
             throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
+        }          
+        const now = new Date();
+        const saleStart = new Date( ordeEvent.sale_start_at );
+        const saleEnd = new Date( ordeEvent.sale_end_at );
+        if (saleEnd < now) {
+            throw appError(ERROR_STATUS_CODE, `超過販售時間`)
+        } else if(now < saleStart){
+            throw appError(ERROR_STATUS_CODE, `未達販售時間`)
         }
+
 
         //1. 新增訂單資料
         const newOrder = orderRepository.create({
@@ -68,11 +77,11 @@ const createTestOrder = async (orderData, userId) => {
 
             const availableSeats = await seatRepository
                 .createQueryBuilder('seat')
-                .setLock('pessimistic_write')  // 加入悲觀鎖
                 .where('seat.status = :status', { status: 'available' })
                 .andWhere('seat.section_id = :sectionId', { sectionId: sectionId })
                 .orderBy('seat.seat_number', 'ASC')
                 .take(count)
+                .setLock('pessimistic_write')  // 加入悲觀鎖
                 .getMany();
 
             if (availableSeats.length < count) {

@@ -15,7 +15,7 @@ module.exports = new EntitySchema({
       unique: true
     },
     price_paid: {
-      type: "numeric",
+      type: 'integer',
       comment: "Actual price paid for this ticket"
     },
     type: {
