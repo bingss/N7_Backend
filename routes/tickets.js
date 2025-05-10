@@ -8,7 +8,7 @@ const ticketsController = require('../controllers/tickets')
 const { USER_ROLE } = require('../enums/index')
 
 const authRole = require('../middlewares/authRole')({
-  allowedRoles: [USER_ROLE.GENERAL],
+  allowedRoles: [USER_ROLE.GENERAL,USER_ROLE.ORGANIZER,USER_ROLE.ADMIN],
   logger
 })
 
@@ -18,13 +18,13 @@ const isAuth = require('../middlewares/auth')({
   logger
 })
 
-router.post
+router.post('/postTestData', isAuth, authRole, handleErrorAsync(ticketsController.postTestOrder))
 
 // 使用者取得票券列表
-router.get('/',isAuth, authRole, handleErrorAsync(ticketsController.getTickets));
+router.get('/',isAuth, authRole, handleErrorAsync(ticketsController.getOrders));
 
 // 使用者取得單一票券詳情
-router.get('/:orderId',isAuth, authRole, handleErrorAsync(ticketsController.getSingleTicket));
+router.get('/:orderId',isAuth, authRole, handleErrorAsync(ticketsController.getOneOrder));
 
 
 module.exports = router

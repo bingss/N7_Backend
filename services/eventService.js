@@ -4,6 +4,8 @@ const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { moveFinalImage } = require('../utils/imageUtils')
 const { formatDatabaseDate } = require('../utils/timeUtils')
+const { compareChangedData,generateSectionAndSeat } = require('./utils/eventUtils')
+const { EVENT_STAUSUS } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -11,6 +13,8 @@ const createNewEvent = async (newEventData, userId) => {
     return dataSource.transaction(async (manager) => {
         const eventRepository = manager.getRepository('Event')
         const sectionRepository = manager.getRepository('Section')
+        const seatRepository = manager.getRepository('Seat')
+
         //儲存活動資料
         const newEvent = eventRepository.create({
             user_id: userId,
@@ -32,15 +36,13 @@ const createNewEvent = async (newEventData, userId) => {
 
         // 儲存分區資料
         const savedEventId = savedEvent.id
-        const newSections = newEventData.sections.map((section) => {
-            return sectionRepository.create({
-              section: section.section_name,
-              total_seats: section.ticket_total,
-              price_default: section.price,
-              event_id: savedEventId,
-            });
-        });
-        const savedSection = await sectionRepository.save(newSections);
+        
+        const {savedSections,savedSeats} = await generateSectionAndSeat(manager, newEventData, savedEventId);
+        
+        //沒更新活動資料又沒更新分區資料成功
+        if ( !savedSections || !savedSeats ) {
+            throw appError(ERROR_STATUS_CODE, '新增活動失敗')
+        }
 
         // 移動圖片位置並儲存圖片資料
         let newCoverImgUrl = null
@@ -60,11 +62,11 @@ const createNewEvent = async (newEventData, userId) => {
             }
         }
         const updatedEvent = await eventRepository.update({
-            id: savedEventId
-        }, {
-            cover_image_url: newCoverImgUrl,
-            section_image_url: newSectionImgUrl
-        })
+                id: savedEventId
+            }, {
+                cover_image_url: newCoverImgUrl,
+                section_image_url: newSectionImgUrl
+            })
     
         return {
             savedEvent: savedEvent,
@@ -78,7 +80,7 @@ const updateEvent = async (newEventData, eventId, userId) => {
     return dataSource.transaction(async (manager) => {
         const eventRepository = manager.getRepository('Event')
         const sectionRepository = manager.getRepository('Section')
-
+        const seatRepository = manager.getRepository('Seat')
         //比對更新資料
         const originalEventData = await eventRepository.findOne({
             select: [
@@ -93,7 +95,8 @@ const updateEvent = async (newEventData, eventId, userId) => {
                 'section_image_url',
                 'performance_group',
                 'description',
-                'type'],
+                'type',
+                'status'],
             where: {
                 id : eventId,
                 user_id : userId
@@ -103,6 +106,10 @@ const updateEvent = async (newEventData, eventId, userId) => {
         if (!originalEventData) {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
+        
+        if (originalEventData.status === EVENT_STAUSUS.APPROVED ) {
+            throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
+        }
 
         originalEventData.start_at = formatDatabaseDate(originalEventData.start_at)
         originalEventData.end_at = formatDatabaseDate(originalEventData.end_at)
@@ -111,10 +118,8 @@ const updateEvent = async (newEventData, eventId, userId) => {
 
         const changedData = await compareChangedData(originalEventData, newEventData, eventId)
 
-        
         let updatedEventResult = 0
         if (Object.keys(changedData).length > 0) {
-            console.log(`更新活動欄位: ${Object.keys(changedData).join(', ')}`);
             updatedEventResult = await eventRepository.update(
               { id: eventId },
               changedData
@@ -124,23 +129,17 @@ const updateEvent = async (newEventData, eventId, userId) => {
             }
         }
 
-        //刪除所有分區再擺上去
+        //刪除所有分區再擺上去，Seat連帶被刪除
         const delSectionResult = await sectionRepository.delete({ event_id : eventId })
         if (delSectionResult.affected === 0) {
             throw appError(ERROR_STATUS_CODE, '更新活動失敗')
         }
         // 儲存分區資料
-        const newSections = newEventData.sections.map((section) => {
-            return sectionRepository.create({
-              section: section.section_name,
-              total_seats: section.ticket_total,
-              price_default: section.price,
-              event_id: eventId,
-            });
-        });
-        const savedSection = await sectionRepository.save(newSections);
+        const {savedSections,savedSeats} = await generateSectionAndSeat(manager, newEventData, eventId);
+
+
         //沒更新活動資料又沒更新分區資料成功
-        if ( !savedSection ) {
+        if ( !savedSections || !savedSeats ) {
             throw appError(ERROR_STATUS_CODE, '更新活動失敗')
         }
 
@@ -165,30 +164,6 @@ const updateEvent = async (newEventData, eventId, userId) => {
     });
 } 
 
-async function compareChangedData(originalData, newData, eventId) {
-    const changedData = {};
-
-    // 遍歷新資料的所有欄位
-    for (const key in newData) {
-        // 確保該欄位在原資料中存在且值不同
-        if (key in originalData && originalData[key] !== newData[key]) {
-            if (key === 'cover_image_url' || key === 'section_image_url') {
-                // 移動圖片位置並儲存圖片資料
-                try {
-                    changedData[key] = await moveFinalImage( newData[key], eventId)
-                }catch (error) {
-                    changedData[key] = null
-                }
-            }
-            else{
-                changedData[key] = newData[key];
-            }
-        }
-    }
-
-    return changedData;
-}
-
 const getEditEventData = async ( orgUserId, eventId ) => {
     try {
         const eventRepository = dataSource.getRepository('Event')
@@ -211,6 +186,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
                 'event.type AS type',
                 'event.cover_image_url AS cover_image_url',
                 'event.section_image_url AS section_image_url',
+                'event.status AS status',
             
                 'section.id AS section_id',
                 'section.section AS section_name',
@@ -220,6 +196,10 @@ const getEditEventData = async ( orgUserId, eventId ) => {
             .getRawMany();
         if (!eventWithSections || eventWithSections.length === 0) {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
+        }
+        console.log(eventWithSections)
+        if (eventWithSections[0].status === EVENT_STAUSUS.APPROVED ) {
+            throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
         }
 
         const eventInfo = {
@@ -324,6 +304,7 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
         .leftJoin('section.Seat', 'seat')
         .leftJoin('seat.Ticket', 'ticket')
         .where('event.id = :eventId', { eventId })
+        .andWhere('event.user_id = :orgUserId', { orgUserId })
         .select([
             'event.id AS event_id',
             'event.title AS title',
