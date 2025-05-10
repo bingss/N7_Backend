@@ -5,13 +5,12 @@ const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { getOrdersData,getOneOrderData,createTestOrder } = require('../services/orderService')
 const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
-
-
 const ERROR_STATUS_CODE = 400;
 
 
+//新增暫時訂單，供做測試使用
 const postTestOrder = async (req, res, next) => {
-    // //欄位驗證
+    // //尚缺少欄位驗證
     // const result = proposeEventValid.safeParse(req.body);
     // if (!result.success) {
     //   const errorMessages = result.error.issues.map(issue => issue.message);

@@ -4,7 +4,7 @@ const logger = require('../utils/logger')('Tickets')
 const router = express.Router()
 const { dataSource } = require('../db/data-source')
 const handleErrorAsync = require('../utils/handleErrorAsync')
-const ticketsController = require('../controllers/tickets')
+const ordersController = require('../controllers/orders')
 const { USER_ROLE } = require('../enums/index')
 
 const authRole = require('../middlewares/authRole')({
@@ -19,13 +19,13 @@ const isAuth = require('../middlewares/auth')({
 })
 
 // 
-router.post('/postTestData', isAuth, authRole, handleErrorAsync(ticketsController.postTestOrder))
+router.post('/postTestData', isAuth, authRole, handleErrorAsync(ordersController.postTestOrder))
 
 // 16.使用者取得訂單(票券)列表
-router.get('/',isAuth, authRole, handleErrorAsync(ticketsController.getOrders));
+router.get('/',isAuth, authRole, handleErrorAsync(ordersController.getOrders));
 
 // 17.使用者取得單一訂單(票券)詳情
-router.get('/:orderId',isAuth, authRole, handleErrorAsync(ticketsController.getOneOrder));
+router.get('/:orderId',isAuth, authRole, handleErrorAsync(ordersController.getOneOrder));
 
 
 module.exports = router
