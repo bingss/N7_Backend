@@ -14,11 +14,6 @@ module.exports = new EntitySchema({
       length: 20,
       nullable: false
     },
-    total_seats: {
-      type: 'integer',
-      nullable: false,
-      default: 0
-    },
     price_default: {
       type: 'integer',
       nullable: false,
