@@ -43,10 +43,11 @@ const checkImage = async (req, res, next) => {
 
     const imgBuffer = fs.readFileSync(files.image[0].filepath);
     const dimensions = imageSize(imgBuffer);
-    const orientation =
-        dimensions.width > dimensions.height ? '橫式' :
-        dimensions.width < dimensions.height ? '直式' : '正方形';
-    
+    //若為直式圖片回傳錯誤
+    if( fields.type?.[0] === IMAGE_TYPES.COVER && dimensions.width < dimensions.height){
+        console.log(`[checkImageFile] 僅限上傳橫式圖片:高=${dimensions.height},寬=${dimensions.width}`)
+        next( appError(ERROR_STATUS_CODE, '僅限上傳橫式圖片') )
+    }
  
     const reqImgType = fields.type?.[0] ? IMAGE_TYPES[ fields.type[0].toUpperCase() ] : null
     if( !files.image || !reqImgType  ) {
