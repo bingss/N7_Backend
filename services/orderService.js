@@ -211,7 +211,7 @@ const getOneOrderData = async ( userId, orderId ) => {
                         price: ticket.ticket_price,
                         type: ticket.ticket_type,
                         status:ticket.status,
-                        qrcode_image: ticket.ticket_type === TICKET_STATUS.USED ? '':await generateTicketQRCode({
+                        qrcode_image: ticket.status === TICKET_STATUS.USED ? '' :await generateTicketQRCode({
                             ticket_id: ticket.ticket_id,
                             user_id: userId,
                             event_id: base.event_id,}),
