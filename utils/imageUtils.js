@@ -4,7 +4,8 @@ const logger = require('./logger')('imageUtils')
 const appError = require('./appError')
 const formidable = require('formidable')
 const formidableErrors = require('formidable').errors;
-
+const { imageSize } = require('image-size');
+const fs = require('fs');
 
 const{firebaseAdmin,bucket,isFirebaseEnabled} = require('./firebaseUtils')
 
@@ -39,6 +40,13 @@ const checkImage = async (req, res, next) => {
         console.log(`[checkImageFile] ${error.message}`)
         next( appError(ERROR_STATUS_CODE, '欄位填寫錯誤') )
     }
+
+    const imgBuffer = fs.readFileSync(files.image[0].filepath);
+    const dimensions = imageSize(imgBuffer);
+    const orientation =
+        dimensions.width > dimensions.height ? '橫式' :
+        dimensions.width < dimensions.height ? '直式' : '正方形';
+    
  
     const reqImgType = fields.type?.[0] ? IMAGE_TYPES[ fields.type[0].toUpperCase() ] : null
     if( !files.image || !reqImgType  ) {
@@ -46,6 +54,7 @@ const checkImage = async (req, res, next) => {
         next( appError(ERROR_STATUS_CODE, '欄位填寫錯誤') )
         return;
     }
+
     req.imgType = reqImgType
     req.imgFile = files.image[0]
     next()
