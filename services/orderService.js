@@ -2,7 +2,7 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
-const { generateTicketQRCode } = require('../utils/qrcodeUtils')
+const { generateTicketQrcode } = require('../utils/qrcodeUtils')
 const { PAYMENT_METHOD,EVENT_STAUSUS  } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
@@ -18,19 +18,19 @@ const createTestOrder = async (orderData, userId) => {
         if(orderData.tickets.length === 0){
             throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤')
         }
-        const ordeEvent = await eventRepository.findOne({
+        const orderEvent = await eventRepository.findOne({
                     where: {  id: orderData.event_id },
                     select: [ 'status','sale_start_at','sale_end_at' ],
                 });
-        if (!ordeEvent) {
+        if (!orderEvent) {
             throw appError(ERROR_STATUS_CODE, `找無訂單輸入之活動`)
         }
-        if(ordeEvent.status != EVENT_STAUSUS.APPROVED){
+        if(orderEvent.status != EVENT_STAUSUS.APPROVED){
             throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
         }          
         const now = new Date();
-        const saleStart = new Date( ordeEvent.sale_start_at );
-        const saleEnd = new Date( ordeEvent.sale_end_at );
+        const saleStart = new Date( orderEvent.sale_start_at );
+        const saleEnd = new Date( orderEvent.sale_end_at );
         if (saleEnd < now) {
             throw appError(ERROR_STATUS_CODE, `超過販售時間`)
         } else if(now < saleStart){
@@ -196,6 +196,7 @@ const getOneOrderData = async ( userId, orderId ) => {
                 email: base.user_email
             },
             event: {
+                id: base.event_id,
                 title: base.event_title,
                 location: base.event_location,
                 address: base.event_address,
@@ -211,7 +212,7 @@ const getOneOrderData = async ( userId, orderId ) => {
                         price: ticket.ticket_price,
                         type: ticket.ticket_type,
                         status:ticket.status,
-                        qrcode_image: await generateTicketQRCode({
+                        qrcode_image: await generateTicketQrcode({
                             ticket_id: ticket.ticket_id,
                             user_id: userId,
                             event_id: base.event_id,}),
@@ -227,6 +228,7 @@ const getOneOrderData = async ( userId, orderId ) => {
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
 } 
+
 
 module.exports = {
     getOrdersData,

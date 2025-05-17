@@ -18,6 +18,8 @@ function toDate (val) {
     return new Date(val.replace(' ', 'T'));
 }
 
+
+
 module.exports = { 
     formatDatabaseDate,
     toDate

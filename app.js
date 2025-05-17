@@ -38,7 +38,8 @@ app.use('/api/v1/orders', ordersRouter)
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  req.log.error(err)
+  // req.log.error(err)
+  logger.error(err.message)
   if (err.status) {
     res.status(err.status).json({
       status: false,

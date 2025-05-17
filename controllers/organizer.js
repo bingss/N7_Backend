@@ -3,10 +3,11 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('Organizer')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
+const { verifyTicket } = require('../services/ticketService')
 const { createNewEvent,updateEvent,getEditEventData,getOrgEventsData,getOneOrgEventData } = require('../services/eventService')
 const { uploadImage } = require('../utils/imageUtils')
 const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
-
+const { decodeTicketQrcode } = require('../utils/qrcodeUtils')
 const ERROR_STATUS_CODE = 400;
 
 const postEvent = async (req, res, next) => {
@@ -118,11 +119,37 @@ const getEditEvent = async (req, res, next) => {
 const postImage = async  (req, res, next)=> {
     const imageUrl = await uploadImage(req)
     res.status(201).json({
-        status: 'success',
+        status: true,
+        message:"上傳成功",
         data: {
             image_url: imageUrl
         }
     })
+}
+
+const patchTicket = async  (req, res, next)=> {
+    const { orgEventId } = req.params
+    const token = req.query.token
+    if (isUndefined(orgEventId) || isNotValidString(orgEventId) || isNotValidUuid(orgEventId) 
+        || isUndefined(token) || isNotValidString(token)) {
+        next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
+        return
+    }
+    try{
+        const ticketInfo =await decodeTicketQrcode(token)
+        const formatTicket = await verifyTicket(ticketInfo, orgEventId)
+        res.status(201).json({
+            status: true,
+            message:"驗票成功",
+            data: {
+                ...formatTicket
+            }
+        })
+    }
+    catch(error){
+        if(error.status) throw error
+        throw appError(ERROR_STATUS_CODE, '驗證發生錯誤！請再次掃描')
+    }
 }
 
 module.exports = {
@@ -131,5 +158,6 @@ module.exports = {
     getEvents,
     getEvent,
     getEditEvent,
-    postImage
+    postImage,
+    patchTicket
 }
