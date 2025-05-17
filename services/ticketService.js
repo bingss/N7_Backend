@@ -6,11 +6,11 @@ const { TICKET_STATUS  } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
 
-const verifyTicket = async (ticketInfo, orgEventId) => {
+const verifyTicket = async (ticketInfo, orgEventId, orgUserId) => {
     return dataSource.transaction(async (manager) => {
         const ticketRepository = manager.getRepository('Ticket')
 
-        const{ event_id: ticketEventId, user_id: ticketUserId, ticket_id: ticketId } = ticketInfo
+        const{ event_id: ticketEventId, ticket_id: ticketId } = ticketInfo
 
         if(ticketEventId !== orgEventId){
             throw appError(ERROR_STATUS_CODE, `欲驗證之活動與票券活動不符`)
@@ -24,7 +24,6 @@ const verifyTicket = async (ticketInfo, orgEventId) => {
             .innerJoin("seat.Section", "section")
             .innerJoin("section.Event", "event")
             .where("ticket.id = :ticketId", { ticketId })
-            .andWhere("user.id = :userId", { userId: ticketUserId })
             .andWhere("event.id = :eventId", { eventId: ticketEventId })
             .select([
                 "user.name AS user_name",
@@ -35,15 +34,22 @@ const verifyTicket = async (ticketInfo, orgEventId) => {
                 "event.location AS event_location",
                 "event.start_at AS event_start_at",
                 "event.end_at AS event_end_at",
+                "event.user_id AS org_user_id",
 
                 "ticket.serialNo AS ticket_no",
                 "ticket.status AS ticket_status"
             ])
             .getRawOne();
 
+
         if (!ticketWithUserEvent) {
             throw appError(ERROR_STATUS_CODE, `票券不存在`)
         }
+
+        if( ticketWithUserEvent.org_user_id !==  orgUserId){
+            throw appError(403, `使用者權限不足，非屬該活動之舉辦者`)
+        }
+
         if(ticketWithUserEvent.ticket_status === TICKET_STATUS.USED){
             throw appError(ERROR_STATUS_CODE, `票券已使用`)
         }
@@ -84,6 +90,7 @@ const verifyTicket = async (ticketInfo, orgEventId) => {
         return formatTicket;
     });
 }
+
 module.exports = {
     verifyTicket
 }
