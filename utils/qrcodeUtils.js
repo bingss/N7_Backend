@@ -3,7 +3,7 @@ const { generateJWT, verifyJWT } = require('./jwtUtils');
 
 const generateTicketQrcode = async ( ticketInfo ) => {
   const token = generateJWT(ticketInfo,'10m'); // 產生 JWT token，10分鐘過期
-  // console.log(`QRCODE：${token}`)
+  console.log(`QRCODE：${token}`)
   // 產生 base64 圖片 data:image/png;base64,...
   const qrCodeImage = await QRCode.toDataURL(token);
   return qrCodeImage;
