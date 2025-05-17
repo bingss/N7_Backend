@@ -180,7 +180,7 @@ const getOneOrderData = async ( userId, orderId ) => {
                 "seat.seat_number AS seat_no",
                 "ticket.price_paid AS ticket_price",
                 "ticket.type AS ticket_type",
-                "ticket.qrcode_img AS qrcode_img",
+                // "ticket.qrcode_img AS qrcode_img",
 
                 "ticket.status AS status"
             ])
@@ -205,7 +205,7 @@ const getOneOrderData = async ( userId, orderId ) => {
                 cover_image_url: base.event_cover_image_url
             },
             tickets: await Promise.all(rawTicket
-                // .filter(row => row.status === 'unused')
+                // .filter(row => row.status === TICKET_STATUS.UNUSED)
                 .map(async (ticket) => ({
                         ticket_no: ticket.ticket_no,
                         seat_no: `${ticket.section_name}區${ticket.seat_no}號`,
