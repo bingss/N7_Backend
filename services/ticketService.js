@@ -2,7 +2,6 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
-const { generateTicketQRCode } = require('../utils/qrcodeUtils')
 const { TICKET_STATUS  } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
