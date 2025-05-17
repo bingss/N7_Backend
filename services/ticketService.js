@@ -8,7 +8,6 @@ const ERROR_STATUS_CODE = 400;
 
 const verifyTicket = async (ticketInfo, orgEventId) => {
     return dataSource.transaction(async (manager) => {
-        const eventRepository = manager.getRepository('Event')
         const ticketRepository = manager.getRepository('Ticket')
 
         const{ event_id: ticketEventId, user_id: ticketUserId, ticket_id: ticketId } = ticketInfo
@@ -17,14 +16,16 @@ const verifyTicket = async (ticketInfo, orgEventId) => {
             throw appError(ERROR_STATUS_CODE, `欲驗證之活動與票券活動不符`)
         }
 
-        const ticketWithUserEvent = await eventRepository
-            .createQueryBuilder("event")
-            .leftJoin("event.User", "user")
-            .leftJoin("event.Order", "order")
-            .leftJoin("order.Ticket", "ticket")
-            .where("user.id = :userId", { userId: ticketUserId })
+        const ticketWithUserEvent = await ticketRepository
+            .createQueryBuilder("ticket")
+            .innerJoin("ticket.Order", "order")
+            .innerJoin("order.User", "user")
+            .innerJoin("ticket.Seat", "seat")  //AI建議由ticket → seat → section → event，再次驗證座位之event正確
+            .innerJoin("seat.Section", "section")
+            .innerJoin("section.Event", "event")
+            .where("ticket.id = :ticketId", { ticketId })
+            .andWhere("user.id = :userId", { userId: ticketUserId })
             .andWhere("event.id = :eventId", { eventId: ticketEventId })
-            .andWhere("ticket.id = :ticketId", { ticketId: ticketId })
             .select([
                 "user.name AS user_name",
                 "user.email AS user_email",
