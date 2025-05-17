@@ -35,7 +35,12 @@ router.get('/events',isAuth, authRole, handleErrorAsync(organizerController.getE
 // 23.取得單一活動詳細內容
 router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEvent));
 
+// 24.更新票券使用狀態(驗票)
+router.patch('/events/:orgEventId/verify',isAuth, authRole, handleErrorAsync(organizerController.patchTicket));
+
 // 25.取得編輯之活動資訊
 router.get('/events/edit/:eventId',isAuth, authRole, handleErrorAsync(organizerController.getEditEvent));
+
+
 
 module.exports = router

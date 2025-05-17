@@ -1,5 +1,5 @@
 const IMAGE_TYPE = Object.freeze({
-    COVER: 'cover',
+    COVER:'cover',
     SECTION: 'section'
   });
   

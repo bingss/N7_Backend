@@ -58,6 +58,11 @@ module.exports = new EntitySchema({
       length: 2048,
       nullable: true
     },
+    view_count: {
+      type: 'integer',
+      nullable: false,
+      default: 0
+    },
     type: {
       type: "varchar",
       length: 50,
