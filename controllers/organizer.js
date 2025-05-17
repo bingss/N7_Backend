@@ -128,6 +128,7 @@ const postImage = async  (req, res, next)=> {
 }
 
 const patchTicket = async  (req, res, next)=> {
+    const { id:orgUserId } = req.user;
     const { orgEventId } = req.params
     const token = req.query.token
     if (isUndefined(orgEventId) || isNotValidString(orgEventId) || isNotValidUuid(orgEventId) 
@@ -137,7 +138,7 @@ const patchTicket = async  (req, res, next)=> {
     }
     try{
         const ticketInfo =await decodeTicketQrcode(token)
-        const formatTicket = await verifyTicket(ticketInfo, orgEventId)
+        const formatTicket = await verifyTicket(ticketInfo, orgEventId, orgUserId)
         res.status(201).json({
             status: true,
             message:"驗票成功",
