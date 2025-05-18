@@ -5,7 +5,7 @@ const { dataSource } = require('../db/data-source')
 const { moveFinalImage } = require('../utils/imageUtils')
 const { formatDatabaseDate } = require('../utils/timeUtils')
 const { compareChangedData,generateSectionAndSeat } = require('./utils/eventUtils')
-const { EVENT_STAUSUS } = require('../enums/index')
+const { EVENT_STATUS } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -107,7 +107,7 @@ const updateEvent = async (newEventData, eventId, userId) => {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
         
-        if (originalEventData.status === EVENT_STAUSUS.APPROVED ) {
+        if (originalEventData.status === EVENT_STATUS.APPROVED ) {
             throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
         }
 
@@ -201,7 +201,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
         console.log(eventWithSections)
-        if (eventWithSections[0].status === EVENT_STAUSUS.APPROVED ) {
+        if (eventWithSections[0].status === EVENT_STATUS.APPROVED ) {
             throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
         }
 
@@ -269,11 +269,11 @@ const getOrgEventsData = async ( orgUserId ) => {
             const end = new Date( noStatusOrders.end_at );
     
             // 判斷狀態分類
-            if (status === "checking") {
+            if (status === EVENT_STATUS.CHECKING) {
                 result.checking.push(noStatusOrders);
-            } else if (status === "rejected") {
+            } else if (status === EVENT_STATUS.REJECTED) {
                 result.rejected.push(noStatusOrders);
-            } else if (status === "approved") {
+            } else if (status === EVENT_STATUS.APPROVED) {
                 if (end > now) {
                     result.holding.push(noStatusOrders);
                 } else {
@@ -292,7 +292,7 @@ const getOrgEventsData = async ( orgUserId ) => {
         if (error.status) {
             throw error;
         }
-        logger.error(`[getOrganizerOrders] 取得訂單列表失敗: ${error}`)
+        logger.error(`[getOrganizerOrders] 取得活動列表失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
 } 
@@ -331,6 +331,10 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
         .groupBy('event.id, section.id')
         .getRawMany();
 
+        if(eventWithSections.length === 0){
+            throw appError(ERROR_STATUS_CODE, '活動不存在')
+        }
+
         const eventInfo = {
             id: eventWithSections[0].event_id,
             title: eventWithSections[0].title,
@@ -360,17 +364,49 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
         if (error.status) {
             throw error;
         }
-        logger.error(`[getOrganizerOrders] 取得訂單列表失敗: ${error}`)
+        logger.error(`[getOneOrgEventData] 取得單一活動列表失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
 } 
 
+const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
+    try {
+        const eventRepository = dataSource.getRepository('Event')
+        const queryBuilder = eventRepository.createQueryBuilder("event").where("event.user_id = :orgUserId", { orgUserId: orgUserId })
 
+        if (queryStatus === EVENT_STATUS.FINISHED) {
+            queryBuilder.andWhere("event.status = :status AND event.end_at < NOW()", { status: EVENT_STATUS.APPROVED })
+        } else if(queryStatus === EVENT_STATUS.HOLDING){
+            queryBuilder.andWhere("event.status = :status AND event.start_at > NOW()", { status: EVENT_STATUS.APPROVED })
+        } else if(queryStatus === undefined){
+            //do nothing
+        }
+        else {
+            queryBuilder.andWhere("event.status = :status", { status: queryStatus })
+        }
+
+        const orgEvents = await queryBuilder
+            .select([
+                "event.id AS id",
+                "event.title AS title"
+            ])
+            .getRawMany()
+    
+        return orgEvents
+    }catch (error) {
+        if (error.status) {
+            throw error;
+        }
+        logger.error(`[getOrganizerOrders] 取得活動列表失敗: ${error}`)
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+} 
 
 module.exports = {
     createNewEvent,
     getEditEventData,
     updateEvent,
     getOrgEventsData,
-    getOneOrgEventData
+    getOneOrgEventData,
+    getStausOrgEventsData
 }
