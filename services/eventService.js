@@ -397,7 +397,7 @@ const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
         if (error.status) {
             throw error;
         }
-        logger.error(`[getOrganizerOrders] 取得活動列表失敗: ${error}`)
+        logger.error(`[getStausOrgEventsData] 取得${queryStatus}狀態活動失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
 } 
