@@ -89,9 +89,11 @@ const proposeEventValid  = z.object({
   description: z.string({
     required_error: '活動介紹未填寫正確', invalid_type_error: '活動介紹未填寫正確'
   }).min(1, '活動介紹未填寫正確'),
-  type: z.string({
-    required_error: '活動類型未填寫正確',invalid_type_error: '活動類型未填寫正確'
-  }).min(1, '活動類型未填寫正確'),
+  type_id: z
+    .string({
+      required_error: '活動類型未填寫正確',
+      invalid_type_error: '活動類型未填寫正確',
+    }).uuid('活動類型未填寫正確'),
   cover_image_url: z
     .any()
     .refine(
