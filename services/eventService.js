@@ -12,8 +12,16 @@ const ERROR_STATUS_CODE = 400;
 const createNewEvent = async (newEventData, userId) => {
     return dataSource.transaction(async (manager) => {
         const eventRepository = manager.getRepository('Event')
-        const sectionRepository = manager.getRepository('Section')
-        const seatRepository = manager.getRepository('Seat')
+        const typeRepository = manager.getRepository('Type')
+
+        const eventType = await typeRepository.findOne({
+            select:['name'],
+            where: { id:newEventData.type_id }
+        })
+        if (!eventType) {
+            throw appError(ERROR_STATUS_CODE, '活動類型未填寫正確')
+        }
+
 
         //儲存活動資料
         const newEvent = eventRepository.create({
@@ -27,7 +35,7 @@ const createNewEvent = async (newEventData, userId) => {
             sale_end_at: newEventData.sale_end_at,
             performance_group: newEventData.performance_group,
             description: newEventData.description,
-            type: newEventData.type
+            type_id: newEventData.type_id
         })
         const savedEvent = await eventRepository.save(newEvent)
         if (!savedEvent) {
@@ -80,7 +88,16 @@ const updateEvent = async (newEventData, eventId, userId) => {
     return dataSource.transaction(async (manager) => {
         const eventRepository = manager.getRepository('Event')
         const sectionRepository = manager.getRepository('Section')
-        const seatRepository = manager.getRepository('Seat')
+        const typeRepository = manager.getRepository('Type')
+
+        const eventType = await typeRepository.findOne({
+            select:['name'],
+            where: { id:newEventData.type_id }
+        })
+        if (!eventType) {
+            throw appError(ERROR_STATUS_CODE, '活動類型未填寫正確')
+        }
+
         //比對更新資料
         const originalEventData = await eventRepository.findOne({
             select: [
@@ -95,7 +112,7 @@ const updateEvent = async (newEventData, eventId, userId) => {
                 'section_image_url',
                 'performance_group',
                 'description',
-                'type',
+                'type_id',
                 'status'],
             where: {
                 id : eventId,
@@ -169,6 +186,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
         const eventRepository = dataSource.getRepository('Event')
         const eventWithSections = await eventRepository
             .createQueryBuilder('event')
+            .innerJoin('event.Type', 'type')
             .leftJoin('event.Section', 'section')
             .leftJoin('section.Seat', 'seat')
             .where('event.id = :eventId', { eventId })
@@ -184,7 +202,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
                 'event.sale_end_at AS sale_end_at',
                 'event.performance_group AS performance_group',
                 'event.description AS description',
-                'event.type AS type',
+                'type.name AS type',
                 'event.cover_image_url AS cover_image_url',
                 'event.section_image_url AS section_image_url',
                 'event.status AS status',
@@ -194,7 +212,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
                 'section.price_default AS price',
                 'COUNT(seat.id) AS ticket_total'
             ])
-            .groupBy('event.id, section.id')
+            .groupBy('event.id, section.id, type.id')
             .getRawMany();
 
         if (!eventWithSections || eventWithSections.length === 0) {
@@ -300,36 +318,37 @@ const getOrgEventsData = async ( orgUserId ) => {
 const getOneOrgEventData = async ( orgUserId, eventId ) => {
     try {
         const eventWithSections = await dataSource
-        .getRepository('Section')
-        .createQueryBuilder('section')
-        .leftJoin('section.Event', 'event')
-        .leftJoin('section.Seat', 'seat')
-        .where('event.id = :eventId', { eventId })
-        .andWhere('event.user_id = :orgUserId', { orgUserId })
-        .select([
-            'event.id AS event_id',
-            'event.title AS title',
-            'event.location AS location',
-            'event.address AS address',
-            'event.start_at AS start_at',
-            'event.end_at AS end_at',
-            'event.sale_start_at AS sale_start_at',
-            'event.sale_end_at AS sale_end_at',
-            'event.performance_group AS performance_group',
-            'event.description AS description',
-            'event.type AS type',
-            'event.cover_image_url AS cover_image_url',
-            'event.section_image_url AS section_image_url',
-            'event.status AS status',
+            .getRepository('Event')
+            .createQueryBuilder('event')
+            .innerJoin('event.Type', 'type')
+            .leftJoin('event.Section', 'section')
+            .leftJoin('section.Seat', 'seat')
+            .where('event.id = :eventId', { eventId })
+            .andWhere('event.user_id = :orgUserId', { orgUserId })
+            .select([
+                'event.id AS event_id',
+                'event.title AS title',
+                'event.location AS location',
+                'event.address AS address',
+                'event.start_at AS start_at',
+                'event.end_at AS end_at',
+                'event.sale_start_at AS sale_start_at',
+                'event.sale_end_at AS sale_end_at',
+                'event.performance_group AS performance_group',
+                'event.description AS description',
+                'type.name AS type',
+                'event.cover_image_url AS cover_image_url',
+                'event.section_image_url AS section_image_url',
+                'event.status AS status',
 
-            'section.id AS section_id',
-            'section.section AS section_name',
-            'section.price_default AS price',
-            "COUNT(seat.id) AS ticket_total",
-            "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
-        ])
-        .groupBy('event.id, section.id')
-        .getRawMany();
+                'section.id AS section_id',
+                'section.section AS section_name',
+                'section.price_default AS price',
+                "COUNT(seat.id) AS ticket_total",
+                "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
+            ])
+            .groupBy('event.id, section.id, type.id')
+            .getRawMany();
 
         if(eventWithSections.length === 0){
             throw appError(ERROR_STATUS_CODE, '活動不存在')

@@ -41,9 +41,7 @@ async function generateSectionAndSeat(manager, newEventData, eventId){
         
         let allSeats = [];
         savedSections.forEach((section) => {
-            
             const { ticket_total } = newEventData.sections.find( (eventSection) => eventSection.section_name === section.section)
-            console.log(ticket_total)
             const seats = Array.from({ length: ticket_total }, (_, index) => {
                 return manager.getRepository('Seat').create({
                     seat_number: String(index + 1),      // 從 1 開始編號
