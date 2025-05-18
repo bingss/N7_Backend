@@ -59,7 +59,7 @@ const verifyTicket = async (ticketInfo, orgEventId, orgUserId) => {
         const end = new Date( ticketWithUserEvent.event_end_at );
         const dayBeforeStart = new Date(start.getTime() - 24 * 60 * 60 * 1000); 
         if(now < dayBeforeStart){
-            throw appError(ERROR_STATUS_CODE, `票券尚未開放驗證`)
+            throw appError(ERROR_STATUS_CODE, `活動開始前1天，票券才開放驗證`)
         }
         if(end < now) {
             throw appError(ERROR_STATUS_CODE, `票券活動已結束`)
