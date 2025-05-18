@@ -3,7 +3,7 @@ const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { generateTicketQrcode } = require('../utils/qrcodeUtils')
-const { PAYMENT_METHOD,EVENT_STAUSUS  } = require('../enums/index')
+const { PAYMENT_METHOD,EVENT_STATUS  } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
 const createTestOrder = async (orderData, userId) => {
@@ -14,7 +14,7 @@ const createTestOrder = async (orderData, userId) => {
         const ticketRepository = manager.getRepository('Ticket')
         const sectionRepository = manager.getRepository('Section')
         
-        //欄位檢查，正式版需再增加，檢查活動起訖時間
+        //欄位檢查，正式版需再增加，檢查活動起訖時間、價錢檢查等
         if(orderData.tickets.length === 0){
             throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤')
         }
@@ -25,7 +25,7 @@ const createTestOrder = async (orderData, userId) => {
         if (!orderEvent) {
             throw appError(ERROR_STATUS_CODE, `找無訂單輸入之活動`)
         }
-        if(orderEvent.status != EVENT_STAUSUS.APPROVED){
+        if(orderEvent.status != EVENT_STATUS.APPROVED){
             throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
         }          
         const now = new Date();
