@@ -10,7 +10,7 @@ const verifyTicket = async (ticketInfo, orgEventId, orgUserId) => {
     return dataSource.transaction(async (manager) => {
         const ticketRepository = manager.getRepository('Ticket')
 
-        const{ event_id: ticketEventId, ticket_id: ticketId } = ticketInfo
+        const{ event_id: ticketEventId, user_id: ticketUserId, ticket_id: ticketId } = ticketInfo
 
         if(ticketEventId !== orgEventId){
             throw appError(ERROR_STATUS_CODE, `欲驗證之活動與票券活動不符`)
@@ -24,6 +24,7 @@ const verifyTicket = async (ticketInfo, orgEventId, orgUserId) => {
             .innerJoin("seat.Section", "section")
             .innerJoin("section.Event", "event")
             .where("ticket.id = :ticketId", { ticketId })
+            .andWhere("user.id = :userId", { userId: ticketUserId })
             .andWhere("event.id = :eventId", { eventId: ticketEventId })
             .select([
                 "user.name AS user_name",
