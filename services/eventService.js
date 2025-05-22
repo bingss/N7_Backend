@@ -396,7 +396,7 @@ const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
         if (queryStatus === EVENT_STATUS.FINISHED) {
             queryBuilder.andWhere("event.status = :status AND event.end_at < NOW()", { status: EVENT_STATUS.APPROVED })
         } else if(queryStatus === EVENT_STATUS.HOLDING){
-            queryBuilder.andWhere("event.status = :status AND event.start_at > NOW()", { status: EVENT_STATUS.APPROVED })
+            queryBuilder.andWhere("event.status = :status AND event.end_at > NOW()", { status: EVENT_STATUS.APPROVED })
         } else if(queryStatus === undefined){
             //do nothing
         }

@@ -6,6 +6,7 @@ const logger = require('./utils/logger')('App')
 const userRouter = require('./routes/user')
 const organizerRouter = require('./routes/organizer')
 const ordersRouter = require('./routes/orders')
+const indexRouter = require('./routes/index')
 
 const app = express()
 app.use(cors())
@@ -31,10 +32,12 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+
+
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/organizer', organizerRouter)
 app.use('/api/v1/orders', ordersRouter)
-
+app.use('/api/v1/', indexRouter)
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
