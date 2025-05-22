@@ -6,6 +6,7 @@ const { moveFinalImage } = require('../utils/imageUtils')
 const { formatDatabaseDate } = require('../utils/timeUtils')
 const { compareChangedData,generateSectionAndSeat } = require('./utils/eventUtils')
 const { EVENT_STATUS } = require('../enums/index')
+
 const ERROR_STATUS_CODE = 400;
 
 
@@ -29,6 +30,7 @@ const createNewEvent = async (newEventData, userId) => {
             title:newEventData.title,
             location: newEventData.location,
             address: newEventData.address,
+            city: newEventData.city,
             start_at: newEventData.start_at,
             end_at: newEventData.end_at,
             sale_start_at: newEventData.sale_start_at,
@@ -104,6 +106,7 @@ const updateEvent = async (newEventData, eventId, userId) => {
                 'title',
                 'location',
                 'address',
+                'city',
                 'start_at',
                 'end_at',
                 'sale_start_at',
@@ -396,7 +399,7 @@ const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
         if (queryStatus === EVENT_STATUS.FINISHED) {
             queryBuilder.andWhere("event.status = :status AND event.end_at < NOW()", { status: EVENT_STATUS.APPROVED })
         } else if(queryStatus === EVENT_STATUS.HOLDING){
-            queryBuilder.andWhere("event.status = :status AND event.start_at > NOW()", { status: EVENT_STATUS.APPROVED })
+            queryBuilder.andWhere("event.status = :status AND event.end_at > NOW()", { status: EVENT_STATUS.APPROVED })
         } else if(queryStatus === undefined){
             //do nothing
         }
@@ -409,6 +412,7 @@ const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
                 "event.id AS id",
                 "event.title AS title"
             ])
+            .orderBy("event.start_at", "ASC")
             .getRawMany()
     
         return orgEvents
@@ -421,11 +425,75 @@ const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
     }
 } 
 
+const getComingEventsData = async () => {
+    try {
+        const comingEvents = await dataSource.getRepository('Event')
+            .createQueryBuilder("event")
+            .innerJoin('event.Type', 'type')
+            .select([
+                "event.id AS id",
+                "event.title AS title",
+                "event.cover_image_url AS cover_image_url",
+                "event.start_at AS start_at",
+                "type.name AS type",
+                "event.city AS city"
+            ])
+            .where("event.start_at > NOW()") // 活動尚未開始
+            .andWhere("event.status=:status", { status: EVENT_STATUS.APPROVED })
+            // .andWhere("event.ticket_sale_start_at > NOW()")
+            .orderBy("event.start_at", "ASC") // 最接近活動時間排前面
+            .addOrderBy("event.sale_start_at", "ASC") // 再依售票開始時間排序
+            .limit(16) // 只取 16 筆
+            .getRawMany();
+    
+        return comingEvents
+
+    }catch (error) {
+        if (error.status) {
+            throw error;
+        }
+        logger.error(`[getComingEventsData] 取得即將到來活動失敗: ${error}`)
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+} 
+
+const getTrendEventsData = async () => {
+    try {
+
+        const trendEvents = await dataSource.getRepository('Event')
+            .createQueryBuilder("event")
+            .select([
+                "event.id AS id",
+                "event.title AS title",
+                "event.cover_image_url AS cover_image_url",
+                "event.start_at AS start_at",
+                "event.city AS city"
+            ])
+            .where("event.end_at > NOW()") // 活動尚未結束
+            .andWhere("event.status=:status", { status: EVENT_STATUS.APPROVED })
+            .orderBy("event.view_count", "DESC") // 瀏覽數高到低
+            .addOrderBy("event.start_at", "ASC") // 再依開始時間排序
+            .limit(16) // 只取 16 筆
+            .getRawMany();
+    
+        
+        return trendEvents
+    }catch (error) {
+        if (error.status) {
+            throw error;
+        }
+        logger.error(`[getTrendEventsData] 取得熱門推薦活動失敗: ${error}`)
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+} 
+
 module.exports = {
     createNewEvent,
     getEditEventData,
     updateEvent,
     getOrgEventsData,
     getOneOrgEventData,
-    getStausOrgEventsData
+    getStausOrgEventsData,
+    getComingEventsData,
+    getTrendEventsData
 }
