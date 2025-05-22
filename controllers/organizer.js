@@ -9,6 +9,7 @@ const { uploadImage } = require('../utils/imageUtils')
 const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
 const { decodeTicketQrcode } = require('../utils/qrcodeUtils')
 const { EVENT_STATUS, EVENT_CHINESE_STATUS } = require('../enums/index')
+const { extractAndValidateCity } = require('../utils/cityUtils')
 const ERROR_STATUS_CODE = 400;
 
 const postEvent = async (req, res, next) => {
@@ -20,6 +21,14 @@ const postEvent = async (req, res, next) => {
       next( appError(ERROR_STATUS_CODE, errorMessages ) );
       return;
     }
+
+    const city = extractAndValidateCity(result.data.address)
+    if( !city ){
+      logger.error(`[postEvent]擷取地址中縣市失敗`);
+      next( appError(ERROR_STATUS_CODE, '地址未填寫正確' ) );
+      return;
+    }
+    result.data.city = city
 
     //新增活動
     const {savedEvent,
@@ -55,6 +64,13 @@ const putEvent = async (req, res, next) => {
       next( appError(ERROR_STATUS_CODE, errorMessages ) );
       return;
     }
+    const city = extractAndValidateCity(result.data.address)
+    if( !city ){
+      logger.error(`[putEvent]擷取地址中縣市失敗`);
+      next( appError(ERROR_STATUS_CODE, '地址未填寫正確' ) );
+      return;
+    }
+    result.data.city = city
 
     //編輯活動
     const {savedEvent} = await updateEvent(result.data, eventId, req.user.id)

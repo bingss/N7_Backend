@@ -19,6 +19,12 @@ module.exports = new EntitySchema({
       length: 100,
       nullable: false
     },
+    city: {
+      type: "varchar",
+      length: 10,
+      nullable: false,
+      default: '台北市'
+    },
     address: {
       type: "varchar",
       length: 100,
