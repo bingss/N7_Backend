@@ -4,7 +4,7 @@ const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { moveFinalImage } = require('../utils/imageUtils')
 const { formatDatabaseDate } = require('../utils/timeUtils')
-const { compareChangedData,generateSectionAndSeat } = require('./utils/eventUtils')
+const { compareChangedData, generateSectionAndSeat } = require('./utils/eventUtils')
 const { EVENT_STATUS } = require('../enums/index')
 
 const ERROR_STATUS_CODE = 400;
@@ -16,8 +16,8 @@ const createNewEvent = async (newEventData, userId) => {
         const typeRepository = manager.getRepository('Type')
 
         const eventType = await typeRepository.findOne({
-            select:['name'],
-            where: { id:newEventData.type_id }
+            select: ['name'],
+            where: { id: newEventData.type_id }
         })
         if (!eventType) {
             throw appError(ERROR_STATUS_CODE, '活動類型未填寫正確')
@@ -27,7 +27,7 @@ const createNewEvent = async (newEventData, userId) => {
         //儲存活動資料
         const newEvent = eventRepository.create({
             user_id: userId,
-            title:newEventData.title,
+            title: newEventData.title,
             location: newEventData.location,
             address: newEventData.address,
             city: newEventData.city,
@@ -46,45 +46,45 @@ const createNewEvent = async (newEventData, userId) => {
 
         // 儲存分區資料
         const savedEventId = savedEvent.id
-        
-        const {savedSections,savedSeats} = await generateSectionAndSeat(manager, newEventData, savedEventId);
-        
+
+        const { savedSections, savedSeats } = await generateSectionAndSeat(manager, newEventData, savedEventId);
+
         //沒更新活動資料又沒更新分區資料成功
-        if ( !savedSections || !savedSeats ) {
+        if (!savedSections || !savedSeats) {
             throw appError(ERROR_STATUS_CODE, '新增活動失敗')
         }
 
         // 移動圖片位置並儲存圖片資料
         let newCoverImgUrl = null
         let newSectionImgUrl = null
-        if(newEventData.cover_image_url) {
+        if (newEventData.cover_image_url) {
             try {
                 newCoverImgUrl = await moveFinalImage(newEventData.cover_image_url, savedEventId)
-            }catch (error) {
+            } catch (error) {
                 newCoverImgUrl = null
             }
         }
-        if(newEventData.section_image_url) {
+        if (newEventData.section_image_url) {
             try {
                 newSectionImgUrl = await moveFinalImage(newEventData.section_image_url, savedEventId)
-            }catch (error) {
+            } catch (error) {
                 newSectionImgUrl = null
             }
         }
         const updatedEvent = await eventRepository.update({
-                id: savedEventId
-            }, {
-                cover_image_url: newCoverImgUrl,
-                section_image_url: newSectionImgUrl
-            })
-    
+            id: savedEventId
+        }, {
+            cover_image_url: newCoverImgUrl,
+            section_image_url: newSectionImgUrl
+        })
+
         return {
             savedEvent: savedEvent,
             newCoverImgUrl: newCoverImgUrl,
             newSectionImgUrl: newSectionImgUrl
         }
     });
-} 
+}
 
 const updateEvent = async (newEventData, eventId, userId) => {
     return dataSource.transaction(async (manager) => {
@@ -93,8 +93,8 @@ const updateEvent = async (newEventData, eventId, userId) => {
         const typeRepository = manager.getRepository('Type')
 
         const eventType = await typeRepository.findOne({
-            select:['name'],
-            where: { id:newEventData.type_id }
+            select: ['name'],
+            where: { id: newEventData.type_id }
         })
         if (!eventType) {
             throw appError(ERROR_STATUS_CODE, '活動類型未填寫正確')
@@ -118,16 +118,16 @@ const updateEvent = async (newEventData, eventId, userId) => {
                 'type_id',
                 'status'],
             where: {
-                id : eventId,
-                user_id : userId
+                id: eventId,
+                user_id: userId
             }
         })
 
         if (!originalEventData) {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
-        
-        if (originalEventData.status === EVENT_STATUS.APPROVED ) {
+
+        if (originalEventData.status === EVENT_STATUS.APPROVED) {
             throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
         }
 
@@ -141,8 +141,8 @@ const updateEvent = async (newEventData, eventId, userId) => {
         let updatedEventResult = 0
         if (Object.keys(changedData).length > 0) {
             updatedEventResult = await eventRepository.update(
-              { id: eventId },
-              changedData
+                { id: eventId },
+                changedData
             );
             if (updatedEventResult.affected === 0) {
                 throw appError(ERROR_STATUS_CODE, '更新活動失敗')
@@ -150,16 +150,16 @@ const updateEvent = async (newEventData, eventId, userId) => {
         }
 
         //刪除所有分區再擺上去，Seat連帶被刪除
-        const delSectionResult = await sectionRepository.delete({ event_id : eventId })
+        const delSectionResult = await sectionRepository.delete({ event_id: eventId })
         if (delSectionResult.affected === 0) {
             throw appError(ERROR_STATUS_CODE, '更新活動失敗')
         }
         // 儲存分區資料
-        const {savedSections,savedSeats} = await generateSectionAndSeat(manager, newEventData, eventId);
+        const { savedSections, savedSeats } = await generateSectionAndSeat(manager, newEventData, eventId);
 
 
         //沒更新活動資料又沒更新分區資料成功
-        if ( !savedSections || !savedSeats ) {
+        if (!savedSections || !savedSeats) {
             throw appError(ERROR_STATUS_CODE, '更新活動失敗')
         }
 
@@ -174,17 +174,17 @@ const updateEvent = async (newEventData, eventId, userId) => {
                 'updated_at'
             ],
             where: {
-                id : eventId
+                id: eventId
             }
         })
-    
+
         return {
             savedEvent: savedEvent
         }
     });
-} 
+}
 
-const getEditEventData = async ( orgUserId, eventId ) => {
+const getEditEventData = async (orgUserId, eventId) => {
     try {
         const eventRepository = dataSource.getRepository('Event')
         const eventWithSections = await eventRepository
@@ -209,7 +209,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
                 'event.cover_image_url AS cover_image_url',
                 'event.section_image_url AS section_image_url',
                 'event.status AS status',
-            
+
                 'section.id AS section_id',
                 'section.section AS section_name',
                 'section.price_default AS price',
@@ -222,7 +222,7 @@ const getEditEventData = async ( orgUserId, eventId ) => {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
         console.log(eventWithSections)
-        if (eventWithSections[0].status === EVENT_STATUS.APPROVED ) {
+        if (eventWithSections[0].status === EVENT_STATUS.APPROVED) {
             throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
         }
 
@@ -241,23 +241,23 @@ const getEditEventData = async ( orgUserId, eventId ) => {
             cover_image_url: eventWithSections[0].cover_image_url,
             section_image_url: eventWithSections[0].section_image_url,
             sections: eventWithSections.map(row => ({
-              id: row.section_id,
-              section_name: row.section_name,
-              price: row.price,
-              ticket_total: parseInt(row.ticket_total, 10)
+                id: row.section_id,
+                section_name: row.section_name,
+                price: row.price,
+                ticket_total: parseInt(row.ticket_total, 10)
             }))
-          };
+        };
 
         return eventInfo
-    }catch (error) {
+    } catch (error) {
         if (error.status) {
             throw error;
         }
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
-} 
+}
 
-const getOrgEventsData = async ( orgUserId ) => {
+const getOrgEventsData = async (orgUserId) => {
     try {
         const eventRepository = dataSource.getRepository('Event')
         const orgEvents = await eventRepository
@@ -276,19 +276,19 @@ const getOrgEventsData = async ( orgUserId ) => {
             ])
             .groupBy("event.id")
             .getRawMany();
-    
+
         // 依照結束時間、status分類          
         const classifiedOrders = orgEvents.reduce((result, event) => {
 
-            const { status, ...rest  } = event;
-            const noStatusOrders = { 
+            const { status, ...rest } = event;
+            const noStatusOrders = {
                 ...rest,
                 ticket_total: parseInt(event.ticket_total, 10),
                 ticket_purchaced: parseInt(event.ticket_purchaced, 10)
             }
             const now = new Date();
-            const end = new Date( noStatusOrders.end_at );
-    
+            const end = new Date(noStatusOrders.end_at);
+
             // 判斷狀態分類
             if (status === EVENT_STATUS.CHECKING) {
                 result.checking.push(noStatusOrders);
@@ -302,23 +302,23 @@ const getOrgEventsData = async ( orgUserId ) => {
                 }
             }
             return result;
-            }, {
-                holding: [],
-                finished: [],
-                checking: [],
-                rejected: []
-            });
+        }, {
+            holding: [],
+            finished: [],
+            checking: [],
+            rejected: []
+        });
         return classifiedOrders
-    }catch (error) {
+    } catch (error) {
         if (error.status) {
             throw error;
         }
         logger.error(`[getOrganizerOrders] 取得活動列表失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
-} 
+}
 
-const getOneOrgEventData = async ( orgUserId, eventId ) => {
+const getOneOrgEventData = async (orgUserId, eventId) => {
     try {
         const eventWithSections = await dataSource
             .getRepository('Event')
@@ -353,7 +353,7 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
             .groupBy('event.id, section.id, type.id')
             .getRawMany();
 
-        if(eventWithSections.length === 0){
+        if (eventWithSections.length === 0) {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
 
@@ -371,36 +371,36 @@ const getOneOrgEventData = async ( orgUserId, eventId ) => {
             type: eventWithSections[0].type,
             cover_image_url: eventWithSections[0].cover_image_url,
             section_image_url: eventWithSections[0].section_image_url,
-            status:eventWithSections[0].status,
+            status: eventWithSections[0].status,
             sections: eventWithSections.map(row => ({
-              id: row.section_id,
-              section_name: row.section_name,
-              price: row.price,
-              ticket_total: parseInt(row.ticket_total),
-              ticket_purchaced: parseInt(row.ticket_purchaced, 10)
+                id: row.section_id,
+                section_name: row.section_name,
+                price: row.price,
+                ticket_total: parseInt(row.ticket_total),
+                ticket_purchaced: parseInt(row.ticket_purchaced, 10)
             }))
         };
 
         return eventInfo
-    }catch (error) {
+    } catch (error) {
         if (error.status) {
             throw error;
         }
         logger.error(`[getOneOrgEventData] 取得單一活動列表失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
-} 
+}
 
-const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
+const getStausOrgEventsData = async (orgUserId, queryStatus) => {
     try {
         const eventRepository = dataSource.getRepository('Event')
         const queryBuilder = eventRepository.createQueryBuilder("event").where("event.user_id = :orgUserId", { orgUserId: orgUserId })
 
         if (queryStatus === EVENT_STATUS.FINISHED) {
             queryBuilder.andWhere("event.status = :status AND event.end_at < NOW()", { status: EVENT_STATUS.APPROVED })
-        } else if(queryStatus === EVENT_STATUS.HOLDING){
+        } else if (queryStatus === EVENT_STATUS.HOLDING) {
             queryBuilder.andWhere("event.status = :status AND event.end_at > NOW()", { status: EVENT_STATUS.APPROVED })
-        } else if(queryStatus === undefined){
+        } else if (queryStatus === undefined) {
             //do nothing
         }
         else {
@@ -414,16 +414,16 @@ const getStausOrgEventsData = async ( orgUserId, queryStatus ) => {
             ])
             .orderBy("event.start_at", "ASC")
             .getRawMany()
-    
+
         return orgEvents
-    }catch (error) {
+    } catch (error) {
         if (error.status) {
             throw error;
         }
         logger.error(`[getStausOrgEventsData] 取得${queryStatus}狀態活動失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
-} 
+}
 
 const getComingEventsData = async () => {
     try {
@@ -445,17 +445,17 @@ const getComingEventsData = async () => {
             .addOrderBy("event.sale_start_at", "ASC") // 再依售票開始時間排序
             .limit(16) // 只取 16 筆
             .getRawMany();
-    
+
         return comingEvents
 
-    }catch (error) {
+    } catch (error) {
         if (error.status) {
             throw error;
         }
         logger.error(`[getComingEventsData] 取得即將到來活動失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
-} 
+}
 
 const getTrendEventsData = async () => {
     try {
@@ -475,17 +475,44 @@ const getTrendEventsData = async () => {
             .addOrderBy("event.start_at", "ASC") // 再依開始時間排序
             .limit(16) // 只取 16 筆
             .getRawMany();
-    
-        
+
+
         return trendEvents
-    }catch (error) {
+    } catch (error) {
         if (error.status) {
             throw error;
         }
         logger.error(`[getTrendEventsData] 取得熱門推薦活動失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
-} 
+}
+
+const getAllEventsData = async () => {
+    try {
+        const eventsData = dataSource.getRepository('Event')
+            .createQueryBuilder('event')
+            .innerJoin('event.Type', 'type')
+            .select([
+                "event.id AS id",
+                "event.title AS title",
+                "event.cover_image_url AS cover_image_url",
+                "DATE(event.start_at) AS start_at",
+                "type.name AS type",
+                "event.city AS city"
+            ])
+            .where("event.status = :status", { status: 'approved' })
+            .orderBy("event.start_at", "ASC")
+        const events = await eventsData.getRawMany();
+        const total = await eventsData.getCount();
+
+        return {
+            total,
+            events
+        };
+    } catch (error) {
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+}
 
 module.exports = {
     createNewEvent,
@@ -495,5 +522,6 @@ module.exports = {
     getOneOrgEventData,
     getStausOrgEventsData,
     getComingEventsData,
-    getTrendEventsData
+    getTrendEventsData,
+    getAllEventsData
 }
