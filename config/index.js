@@ -11,12 +11,13 @@ if (process.env.NODE_ENV !== 'production') {
 const db = require('./db')
 const web = require('./web')
 const secret = require('./secret')
-
+const newpay = require('./newpay')
 
 const config = {
   db,
   web,
-  secret
+  secret,
+  newpay
 }
 
 class ConfigManager {

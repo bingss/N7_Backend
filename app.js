@@ -11,6 +11,10 @@ const eventsRouter = require('./routes/events')
 
 
 const app = express()
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
@@ -23,6 +27,9 @@ app.use(pinoHttp({
     }
   }
 }))
+
+
+
 app.use(express.static(path.join(__dirname, 'public')))
 
 app.get('/healthcheck', (req, res) => {
@@ -33,7 +40,6 @@ app.get('/healthcheck', (req, res) => {
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
-
 
 
 app.use('/api/v1/users', userRouter)
