@@ -26,11 +26,6 @@ module.exports = new EntitySchema({
       nullable: false,
       default: 'General'
     },
-    password: {
-      type: 'varchar',
-      length: 72,
-      nullable: true
-    },
     status: { //'active', 'blocked'
       type: 'varchar',
       length: 10,
