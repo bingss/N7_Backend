@@ -1,0 +1,7 @@
+<script>
+  window.opener.postMessage({
+    name: '<%= name %>',
+    googleEmail: '<%= googleEmail %>'
+  }, '<%= returnUrl %>');
+  window.close();
+</script>

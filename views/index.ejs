@@ -23,7 +23,8 @@
         <input type="email" name="Email" :value="order.Email" /> -->
         <button type="submit">送出</button>
       </form>
-      <button v-on:click="createOrder">取得訂單資訊</button>
+      <!-- <a :href="host">取得訂單資訊</a> -->
+       <button v-on:click="handleGoogleLogin">google登入</button>
     </div>
 
     <script type="module">
@@ -33,6 +34,7 @@
       const app = {
         data() {
           return {
+            host,
             order: {},
             purchaseInfo:{
               "event_id": "1dee21b1-a137-4b00-960c-e6c5c036de96",
@@ -54,22 +56,10 @@
           }
         },
         methods: {
-          async createOrder() {
-            try {
-              const url = `${host}`;
-              const res = await axios.post(url, this.purchaseInfo, {
-                headers: {
-                  'Authorization': `Bearer ${this.token}`
-                }
-              });
-              this.result = res;
-              this.order = res.data.data;
-            } catch (err) {
-              console.log(err)
-              this.result = err.response.data.message;
+            handleGoogleLogin() {
+              
             }
-          }
-        },
+          },
         // async mounted() {
         //     const url = `${host}`;
         //     console.log(this.order);

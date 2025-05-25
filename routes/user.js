@@ -7,6 +7,10 @@ const handleErrorAsync = require('../utils/handleErrorAsync')
 const userController = require('../controllers/user')
 const { generateJWT } = require('../utils/jwtUtils');
 const { createOrLoginGoogleAccount } = require('../services/userService')
+
+const { isValidString } = require('../utils/validUtils');
+const { isValidUrl } = require('../utils/validUtils');
+const { isUndefined } = require('../utils/validUtils');
 const isAuth = require('../middlewares/auth')({
   secret: config.get('secret').jwtSecret,
   userRepository: dataSource.getRepository('User'),
@@ -29,7 +33,11 @@ router.post('/signup', handleErrorAsync(userController.postSignup));
 router.post('/signin', handleErrorAsync(userController.postLogin));
 
 // GET 所有使用者
-router.get('/', userController.getAllUsers);
+// router.get('/', userController.getAllUsers);
+
+router.get('/', (req, res) => {
+  res.render('index', { title: 'Express', Host: `${ process.env.GOOGLE_AUTH_CALLBACKURL }/api/v1/users/google/signin-or-signup` } );
+});
 
 //  GET 取得使用者資料
 router.get('/profile', isAuth, handleErrorAsync(userController.getProfile));
