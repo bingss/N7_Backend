@@ -18,7 +18,7 @@ const GoogleStrategy = require( 'passport-google-oauth20' ).Strategy;
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_AUTH_CLIENTID,
     clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET,
-    callbackURL: `http://${ config.get('db.host') }:${ config.get('web.port') }/api/v1/users/google/callback`,
+    callbackURL: `${ process.env.GOOGLE_AUTH_CALLBACKURL }/api/v1/users/google/callback`,
     passReqToCallback: true
   },
   createOrLoginGoogleAccount
@@ -42,7 +42,7 @@ router.post('/auth', isAuth, handleErrorAsync(userController.postAuth));
 // router.get('/auth/refresh', isAuth, handleErrorAsync(userController.getRefresh));
 // router.get('/auth/logout', isAuth, handleErrorAsync(userController.getLogout));
 
-router.get('/google/sigin-or-signup', passport.authenticate('google', {
+router.get('/google/signin-or-signup', passport.authenticate('google', {
   scope: [ 'email', 'profile'],
   state: 'login'
 }));
