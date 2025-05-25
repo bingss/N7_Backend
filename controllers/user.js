@@ -9,8 +9,9 @@ const { isValidString } = require('../utils/validUtils');
 const { isValidName } = require('../utils/validUtils');
 const { isUndefined } = require('../utils/validUtils');
 const { USER_ROLE } = require('../enums/index')
-
+const { createOrLoginGoogleAccount } = require('../services/userService')
 const userRepository = dataSource.getRepository('User');
+const accountAuthRepository = dataSource.getRepository('AccountAuth')
 const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const userController = {
@@ -35,23 +36,40 @@ const userController = {
       return res.status(400).json({ status: false, message: '密碼與確認密碼不一致' });
     }
   
-    const existingUser = await userRepository.findOne({ where: { email } });
-  
-    if (existingUser) {
-      return res.status(409).json({ status: false, message: '註冊失敗，Email 已被使用' });
+    const existingUsers = await userRepository
+      .createQueryBuilder("user")
+      .innerJoin("user.AccountAuth", "accountauth")
+      .where("user.email=:email", { email })
+      .select([
+          "accountauth.provider AS provider"
+      ])
+      .getRawMany();;
+    
+    if ( existingUsers.length !== 0 ) {
+      if( existingUsers.some( (user) => user.provider === 'local' ) ){
+        return res.status(409).json({ status: false, message: '註冊失敗，Email 已被使用' });
+      }
+      return res.status(409).json({ status: false, message: '註冊失敗，Email已使用其他登入方式註冊，更新密碼後新增帳密登入方式' });
     }
-  
+
     const hashedPassword = await bcrypt.hash(password, 12);
-  
     const newUser = userRepository.create({
-      name,
-      email,
+      name: name,
+      email: email,
       role: USER_ROLE.GENERAL,
-      password: hashedPassword
     });
-  
-    await userRepository.save(newUser);
-  
+
+    const savedUser = await userRepository.save(newUser);
+    if (!savedUser) {
+        throw appError(ERROR_STATUS_CODE, '註冊失敗')
+    }
+    accountAuth = accountAuthRepository.create({
+      provider: 'local',
+      password: hashedPassword,
+      user_id : savedUser.id
+    })
+    await accountAuthRepository.save(accountAuth);
+    
     res.status(201).json({ status: true, message: '註冊成功' });
   },
 
@@ -63,11 +81,24 @@ const userController = {
       return res.status(400).json({ status: false, message: '欄位未填寫正確' });
     }
 
-    const userRepository = dataSource.getRepository('User');
-    const user = await userRepository.findOne({
-      where: { email },
-      select: ['id', 'email', 'password', 'name', 'role']
-    });
+    // const user = await userRepository.findOne({
+    //   where: { email },
+    //   select: ['id', 'email', 'password', 'name', 'role']
+    // });
+
+    const user = await userRepository
+      .createQueryBuilder("user")
+      .innerJoin("user.AccountAuth", "accountauth")
+      .where("user.email=:email", { email })
+      .andWhere("accountauth.provider=:local",{ local:'local' })
+      .select([
+          "user.id AS id",
+          "user.email AS email",
+          "user.name AS name",
+          "user.role AS role",
+          "accountauth.password AS password"
+      ])
+      .getRawOne();
 
     if (!user) {
       return res.status(401).json({ status: false, message: '使用者不存在或密碼輸入錯誤' });
@@ -90,6 +121,34 @@ const userController = {
         }
       }
     });
+  },
+
+  async googleCallback(req,res,next){
+    const mode = req.authInfo.state
+    const user = req.user
+    if (mode === 'bind'){
+      res.status(200).json({
+        status: true,
+        message: '綁定成功',
+        data: {
+          name: user.name,
+          google_email : user.google_email
+        }
+      });
+    }else{
+      const token = generateJWT({ userId: user.id });
+      res.status(200).json({
+        status: true,
+        message: '登入成功',
+        data: {
+          token,
+          user: {
+            name: user.name,
+            role: user.role
+          }
+        }
+      });
+    }
   },
 
   // 取得使用者資料
@@ -130,7 +189,7 @@ const userController = {
   async getAllUsers(req, res) {
     try {
       const users = await userRepository.find({
-        select: ['id', 'name', 'email', 'role', 'password', 'created_at']
+        select: ['id', 'name', 'email', 'role', 'created_at']
       });
 
       res.status(200).json({
@@ -164,8 +223,7 @@ const userController = {
     })
 
     const updateUser = await userRepo.update({
-      id,
-      //name: user.name
+      id
     }, {
       name
     })
@@ -204,9 +262,8 @@ const userController = {
   async putPassword (req, res, next) {
     try {
       const { id } = req.user
-      const { password:password, new_password: newPassword, confirm_new_password: confirmNewPassword } = req.body
-      if (isUndefined(password) || !isValidString(password) ||
-      isUndefined(newPassword) || !isValidString(newPassword) ||
+      const { password:oldPassword, new_password: newPassword, confirm_new_password: confirmNewPassword } = req.body
+      if ( isUndefined(newPassword) || !isValidString(newPassword) ||
       isUndefined(confirmNewPassword) || !isValidString(confirmNewPassword)) {
         // logger.warn('欄位未填寫正確')
         res.status(400).json({
@@ -215,7 +272,7 @@ const userController = {
         })
         return
       }
-      if (!isValidPassword(password) || !isValidPassword(newPassword) || !isValidPassword(confirmNewPassword)) {
+      if ( !isValidPassword(newPassword) || !isValidPassword(confirmNewPassword)) {
         // logger.warn('密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字')
         res.status(400).json({
           status: false,
@@ -223,7 +280,7 @@ const userController = {
         })
         return
       }
-      if (newPassword === password) {
+      if (newPassword === oldPassword) {
         // logger.warn('新密碼不能與舊密碼相同')
         res.status(400).json({
           status: false,
@@ -238,33 +295,59 @@ const userController = {
         })
         return
       }
-      const userRepository = dataSource.getRepository('User')
-      const existingUser = await userRepository.findOne({
-        select: ['password'],
-        where: { id }
-      })
-      const isMatch = await bcrypt.compare(password, existingUser.password)
-      if (!isMatch) {
-        res.status(400).json({
-          status: false,
-          message: '舊密碼輸入錯誤'
-        })
-        return
-      }
+      const existingLocalUser = await userRepository
+          .createQueryBuilder("user")
+          .innerJoin("user.AccountAuth", "accountauth")
+          .where("user.id=:id", { id })
+          .andWhere("accountauth.provider=:local",{ local:'local' })
+          .select([
+              "accountauth.password AS password",
+          ])
+          .getRawOne();
       const salt = await bcrypt.genSalt(10)
       const hashPassword = await bcrypt.hash(newPassword, salt)
-      const updatedResult = await userRepository.update({
-        id
-      }, {
-        password: hashPassword
-      })
-      if (updatedResult.affected === 0) {
-        res.status(400).json({
-          status: false,
-          message: '更新密碼失敗'
+
+      if( !existingLocalUser ){
+        accountAuth = accountAuthRepository.create({
+            provider: 'local',
+            password : hashPassword,
+            user_id : id
         })
-        return
+        await accountAuthRepository.save(accountAuth)
+        
+      }else{
+        //若已存在local帳號，才檢核輸入之舊密碼
+        if(isUndefined(oldPassword) || !isValidString(oldPassword)){
+          res.status(400).json({
+            status: false,
+            message: '欄位未填寫正確'
+          })
+          return
+        }
+        const isMatch = await bcrypt.compare(oldPassword, existingLocalUser.password)
+        if (!isMatch) {
+          res.status(400).json({
+            status: false,
+            message: '舊密碼輸入錯誤'
+          })
+          return
+        }
+
+        const updatedResult = await accountAuthRepository.update({
+            user_id : id,
+            provider: 'local'
+          }, {
+            password: hashPassword
+          })
+        if (updatedResult.affected === 0) {
+          res.status(400).json({
+            status: false,
+            message: '更新密碼失敗'
+          })
+          return
+        }
       }
+
       res.status(200).json({
         status: true,
         data: '密碼更新成功'

@@ -17,7 +17,7 @@ module.exports = new EntitySchema({
     payment_method: {
       type: "varchar",
       length: 50,
-      nullable: false,
+      nullable: true,
       comment: "'credit_card', 'bank_transfer', 'line_pay'..."
     },
     created_at: {
