@@ -9,6 +9,7 @@ const Seat = require('../entities/Seat')
 const Section = require('../entities/Section')
 const Ticket = require('../entities/Ticket')
 const Type = require('../entities/Type')
+const AccountAuth = require('../entities/AccountAuth')
 const {UserSnSubscriber, TicketSnSubscriber, OrderSnSubscriber} =require('../subscribers/serialNoSubscriber')
 
 
@@ -29,7 +30,8 @@ const dataSource = new DataSource({
     Seat,
     Section,
     Ticket,
-    Type
+    Type,
+    AccountAuth
   ],
   subscribers: [
     UserSnSubscriber,
