@@ -9,7 +9,6 @@ const { isValidString } = require('../utils/validUtils');
 const { isValidName } = require('../utils/validUtils');
 const { isUndefined } = require('../utils/validUtils');
 const { USER_ROLE } = require('../enums/index')
-const { createOrLoginGoogleAccount } = require('../services/userService')
 const userRepository = dataSource.getRepository('User');
 const accountAuthRepository = dataSource.getRepository('AccountAuth')
 const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -121,34 +120,6 @@ const userController = {
         }
       }
     });
-  },
-
-  async googleCallback(req,res,next){
-    const mode = req.authInfo.state
-    const user = req.user
-    if (mode === 'bind'){
-      res.status(200).json({
-        status: true,
-        message: '綁定成功',
-        data: {
-          name: user.name,
-          google_email : user.google_email
-        }
-      });
-    }else{
-      const token = generateJWT({ userId: user.id });
-      res.status(200).json({
-        status: true,
-        message: '登入成功',
-        data: {
-          token,
-          user: {
-            name: user.name,
-            role: user.role
-          }
-        }
-      });
-    }
   },
 
   // 取得使用者資料

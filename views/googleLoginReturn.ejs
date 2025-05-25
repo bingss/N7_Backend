@@ -1,0 +1,6 @@
+<script>
+  window.opener.postMessage({
+    token: '<%= token %>'
+  }, '<%= returnUrl %>');
+  window.close();
+</script>
