@@ -467,12 +467,13 @@ const getTrendEventsData = async () => {
                 "event.cover_image_url AS cover_image_url",
                 "event.start_at AS start_at",
                 "event.city AS city",
+                "event.view_count AS view_count",
                 "type.name AS type"
             ])
             .where("event.end_at > NOW()") // 活動尚未結束
             .andWhere("event.status=:status", { status: EVENT_STATUS.APPROVED })
             .orderBy("event.view_count", "DESC") // 瀏覽數高到低
-            .addOrderBy("event.start_at", "ASC") // 再依開始時間排序
+            .addOrderBy("event.start_at", "ASC") // 瀏覽數相同則再依開始時間排序
             .limit(15) // 只取 15 筆
             .getRawMany();
 
