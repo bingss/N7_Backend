@@ -5,7 +5,7 @@ const appError = require('../utils/appError')
 const config = require('../config/index')
 
 
-const createOrLoginGoogleAccount = async (req, accessToken, refreshToken, profile, cb) => {
+const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile, cb) => {
     const mode = req.query.state; // 'login' or 'bind'
     const accountAuthRepo = dataSource.getRepository('AccountAuth')
     const userRepo = dataSource.getRepository('User')
@@ -17,8 +17,10 @@ const createOrLoginGoogleAccount = async (req, accessToken, refreshToken, profil
     try {
         if (mode === 'bind') {
             redirectUrlURL = config.get('google').bindRedirectFrontUrl
+            // req.user = {id:"33950bb5-8de5-496f-8fb7-2d4e3c223d6b"} //測試使用之假資料
             if (!req.user) {
-                return cb(null, false, { message: '尚未登入' });
+                next(appError(401, '尚未登入'))
+                return
             }
             const loginUserId = req.user.id
 
@@ -109,6 +111,45 @@ const createOrLoginGoogleAccount = async (req, accessToken, refreshToken, profil
 
 }
 
+const deleteGoogleAccount = async (userId) => {
+    const accountAuthRepo = dataSource.getRepository('AccountAuth')
+
+    //取得帳號之登入方式
+    const existingAuths = await accountAuthRepo
+        .createQueryBuilder("accountauth")
+        .where("accountauth.user_id=:user_id", {user_id : userId })
+        .select([
+            "accountauth.id AS id",
+            "accountauth.provider As provider"
+        ])
+        .getRawMany();
+
+    if(existingAuths.length === 0){
+        throw appError(400, '錯誤，查無任何登入方式')
+    }
+
+    const googleAuth = existingAuths.find(auth => auth.provider === 'google');
+
+    if ( !googleAuth ) {
+        throw appError(400, '尚未綁定Google帳號')
+    }
+
+    const hasOtherAuth = existingAuths.some(auth => auth.provider !== 'google');
+
+    if ( !hasOtherAuth ) {
+        throw appError(400, '僅有Google登入方式，請於更新密碼後再解除綁定')
+    }
+
+    //刪除綁定關係
+    const delGoogleAuthResult = await accountAuthRepo.delete(googleAuth.id)
+    if (delGoogleAuthResult.affected === 0) {
+        throw appError(400, '解除綁定失敗')
+    }
+    return false; //返回false表示Google帳號已解除綁定
+}
+
+
 module.exports = {
-    createOrLoginGoogleAccount
+    createOrBindGoogleAccount,
+    deleteGoogleAccount
 }
