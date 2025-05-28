@@ -9,7 +9,7 @@ const { isValidString } = require('../utils/validUtils');
 const { isValidName } = require('../utils/validUtils');
 const { isUndefined } = require('../utils/validUtils');
 const { USER_ROLE } = require('../enums/index')
-const { createOrLoginGoogleAccount } = require('../services/userService')
+const { deleteGoogleAccount } = require('../services/userService')
 const userRepository = dataSource.getRepository('User');
 
 const googleCallback = async (req, res, next) => {
@@ -37,8 +37,21 @@ const googleCallback = async (req, res, next) => {
     })(req, res, next);
 }
 
+const unbindGoogleAccount = async (req, res, next) => {
+    const userId = req.user.id
 
+    const isBinding = await deleteGoogleAccount(userId)
+
+    res.status(200).json({
+        status: true,
+        message: "解除綁定成功",
+        data: {
+            google_bind : isBinding
+        }
+    })
+}
 
 module.exports = {
-    googleCallback
+    googleCallback,
+    unbindGoogleAccount
 }

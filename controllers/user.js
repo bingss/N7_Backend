@@ -124,14 +124,25 @@ const userController = {
 
   // 取得使用者資料
   async getProfile(req, res, next) {
+
+    const userId = req.user.id
+
+    const accountAuthRepo = dataSource.getRepository('AccountAuth')
+
+    //取得帳號之登入方式
+    const hasGoogleAuth = (await accountAuthRepo.count({
+      where: { user_id: userId, provider: 'google' }
+    })) > 0
+
     res.status(200).json({
         status: true,
         message: '取得成功',
         data: {
-          'serialNo':req.user.serialNo,
-          'name': req.user.name,
-          'email': req.user.email,
-          'role': req.user.role
+          serialNo: req.user.serialNo,
+          name: req.user.name,
+          email: req.user.email,
+          role: req.user.role,
+          google_bind: hasGoogleAuth
         }
     })
     return
