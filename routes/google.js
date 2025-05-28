@@ -6,7 +6,7 @@ const { dataSource } = require('../db/data-source')
 const handleErrorAsync = require('../utils/handleErrorAsync')
 const googleController = require('../controllers/google')
 const { generateJWT } = require('../utils/jwtUtils');
-const { createOrLoginGoogleAccount } = require('../services/userService')
+const { createOrBindGoogleAccount } = require('../services/userService')
 
 const { isValidString } = require('../utils/validUtils');
 const { isValidUrl } = require('../utils/validUtils');
@@ -25,25 +25,27 @@ passport.use(new GoogleStrategy({
     callbackURL: `${ config.get('google').callbackUrl }`,
     passReqToCallback: true
   },
-  createOrLoginGoogleAccount
+  createOrBindGoogleAccount
 ));
 
 //測試用
-router.get('/', (req, res) => { 
-  res.render('index', { title: 'Express', Host: `http://localhost:8080/api/v1/google/signin-or-signup` } );
-});
+// router.get('/', (req, res) => { 
+//   res.render('index', { title: 'Express', Host: `http://localhost:8080/api/v1/google/signin-or-signup` } );
+// });
 
 router.get('/signin-or-signup' , passport.authenticate('google', {
   scope: [ 'email', 'profile'],
   state: 'login'
 }));
 
-router.get('/bind', isAuth , passport.authenticate('google', {
+router.get('/bind', isAuth, passport.authenticate('google', {
   scope: ['email', 'profile'],
   state: 'bind'
 }));
 
 router.get('/callback',  googleController.googleCallback)
+
+router.delete('/bind', isAuth, handleErrorAsync(googleController.unbindGoogleAccount));
 
 module.exports = router
 
