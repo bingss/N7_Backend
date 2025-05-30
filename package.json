@@ -26,6 +26,7 @@
     "firebase-admin": "^13.3.0",
     "formidable": "^3.5.4",
     "fs": "^0.0.1-security",
+    "googleapis": "^149.0.0",
     "http-status-codes": "^2.3.0",
     "image-size": "^2.0.2",
     "jsonwebtoken": "^9.0.2",
