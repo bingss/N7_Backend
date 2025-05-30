@@ -3,10 +3,10 @@ const { dataSource } = require('../db/data-source')
 const { Brackets } = require("typeorm");
 const appError = require('../utils/appError')
 const config = require('../config/index')
-
+const { verifyJWT } = require('../utils/jwtUtils');
 
 const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile, cb) => {
-    const mode = req.query.state; // 'login' or 'bind'
+    
     const accountAuthRepo = dataSource.getRepository('AccountAuth')
     const userRepo = dataSource.getRepository('User')
 
@@ -14,16 +14,20 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
     const currentProvider = profile.provider;
     const currentProviderId = profile.id;
     let redirectUrlURL = null;
+
     try {
+        const { state } = req.query;
+        const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
+        const { mode } = stateData; // mode:'login' or 'bind'
         if (mode === 'bind') {
             redirectUrlURL = config.get('google').bindRedirectFrontUrl
-            // req.user = {id:"33950bb5-8de5-496f-8fb7-2d4e3c223d6b"} //測試使用之假資料
+            const { token } = stateData;
+            const verifyResult = await verifyJWT(token)
+            req.user = await userRepo.findOneBy({ id: verifyResult.userId })
             if (!req.user) {
-                next(appError(401, '尚未登入'))
-                return
+                throw appError(401, '使用者錯誤')
             }
-            const loginUserId = req.user.id
-
+            req.user.google_email = googleEmail
             //檢查這個GOOGLE有沒有被其他帳號綁定
             const existingBindedAccount = await accountAuthRepo.findOne({
                 select:['user_id'],
@@ -31,7 +35,7 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
             })
             
             if (existingBindedAccount) {
-                if( existingBindedAccount.user_id === loginUserId ){
+                if( existingBindedAccount.user_id === req.user.id ){
                     return cb( null, false, { googleErrorRedirect: `${redirectUrlURL}?error=repeated_binded` } ); //已綁定過相同Google帳號
                 }
                 return cb(null, false, { googleErrorRedirect: `${redirectUrlURL}?error=binded_other_user` } ); //此Google帳號已被其他使用者綁定
@@ -40,7 +44,7 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
             //檢查這個帳號是否已綁定GOOGLE
             const existingGoogleAuth = await accountAuthRepo.findOne({
                 select:['user_id'],
-                where: {  user_id: loginUserId, provider:currentProvider}
+                where: {  user_id: req.user.id, provider:currentProvider}
             })
             if (existingGoogleAuth) {
                 return cb(null, false, { googleErrorRedirect: `${redirectUrlURL}?error=already_binded` } ); //已綁定過Google帳號
@@ -49,10 +53,9 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
             const newAuth = accountAuthRepo.create({
                 provider: currentProvider,
                 provider_id: currentProviderId,
-                user_id: loginUserId
+                user_id: req.user.id
             });
             await accountAuthRepo.save(newAuth);
-            req.user.google_email = googleEmail
             return cb(null, req.user, { state: 'bind' }); // 綁定後繼續使用原本登入者
 
         }else {

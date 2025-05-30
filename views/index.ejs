@@ -7,26 +7,26 @@
   </head>
   <body>
     <div id="app">
-      {{result}}
-      <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
-        <input type="text" name="MerchantID" :value=order.MerchantID />
-        <input type="text" name="TradeSha" :value="order.TradeSha" />
-        <input
-          type="text"
-          name="TradeInfo"
-          :value="order.TradeInfo"
-        />
+      <!-- {{result}} -->
+      <!-- <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post"> -->
+        <!-- <input type="text" name="MerchantID" :value=order.MerchantID /> -->
+        <!-- <input type="text" name="TradeSha" :value="order.TradeSha" /> -->
+        <!-- <input -->
+          <!-- type="text" -->
+          <!-- name="TradeInfo" -->
+          <!-- :value="order.TradeInfo" -->
+        <!-- /> -->
         <!-- <input type="text" name="TimeStamp" :value="order.TimeStamp" /> -->
-        <input type="text" name="Version" :value=order.Version />
+        <!-- <input type="text" name="Version" :value=order.Version /> -->
         <!-- <input type="text" name="MerchantOrderNo" :value="order.MerchantOrderNo" />
         <input type="text" name="Amt" :value="order.Amt" />
         <input type="email" name="Email" :value="order.Email" /> -->
-        <button type="submit">送出</button>
-      </form>
+        <!-- <button type="submit">送出</button> -->
+      <!-- </form> -->
       <!-- <a :href="host">取得訂單資訊</a> -->
-         <a :href="host">
-            <button>Google 登入</button>
-          </a>
+         <!-- <a :href="host"> -->
+            <button @click="handleGoogleLogin">Google 登入</button>
+          <!-- </a> -->
     </div>
 
     <script type="module">
@@ -53,13 +53,33 @@
                     }
                 ]
             },
-            token: '方便jwttoken',
+            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMzk1MGJiNS04ZGU1LTQ5NmYtOGZiNy0yZDRlM2MyMjNkNmIiLCJpYXQiOjE3NDg2MTk3MDAsImV4cCI6MTc1MTIxMTcwMH0.OoBTa4ZpwP9iu7s_2ZOAhxJFvJJWrPwwOx_B_HiYn6A',
             result:{}
           }
         },
         methods: {
-            handleGoogleLogin() {
-              
+            async handleGoogleLogin() {
+              try {
+                const res = await axios.get(
+                  'http://localhost:8080/api/v1/google/bind',
+                  {
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization' : `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4MDY3MzZlMS03ZTRmLTQyYWQtOTc5Ni1iMzViNDZlYWNkY2EiLCJpYXQiOjE3NDg2MjUzMTEsImV4cCI6MTc1MTIxNzMxMX0.9J6FHiR93zoSEhzOnWsE1gRlYvIoHCPwaFXobrGNmqY`
+                    }
+                  }
+                )
+                console.log(res)
+                const redirectUrl = res.data.data.redirectUrl
+                if (redirectUrl) {
+                  window.location.href = redirectUrl // 導向 Google 授權頁面
+                } else {
+                  alert('綁定失敗：未收到授權網址')
+                }
+              } catch (err) {
+                console.error('綁定錯誤:', err)
+                alert('綁定 Google 帳號失敗，請稍後再試')
+              }
             }
           },
         // async mounted() {
