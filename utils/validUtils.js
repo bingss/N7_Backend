@@ -146,7 +146,8 @@ module.exports = {
   isNotValidInteger,
   isValidName,
   isNotValidUuid,
-  proposeEventValid
+  proposeEventValid,
+  isValidUrl
 }
 
 

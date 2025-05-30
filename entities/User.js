@@ -23,12 +23,8 @@ module.exports = new EntitySchema({
     role: {
       type: 'varchar',
       length: 20,
-      nullable: false
-    },
-    password: {
-      type: 'varchar',
-      length: 72,
-      nullable: false
+      nullable: false,
+      default: 'General'
     },
     status: { //'active', 'blocked'
       type: 'varchar',
@@ -61,6 +57,11 @@ module.exports = new EntitySchema({
     Order: {
       type: "one-to-many",
       target: "Order",
+      inverseSide: "User"
+    },
+    AccountAuth: {
+      type: "one-to-many",
+      target: "AccountAuth",
       inverseSide: "User"
     }
   }

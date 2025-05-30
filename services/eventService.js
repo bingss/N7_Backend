@@ -444,15 +444,12 @@ const getComingEventsData = async () => {
             // .andWhere("event.ticket_sale_start_at > NOW()")
             .orderBy("event.start_at", "ASC") // 最接近活動時間排前面
             .addOrderBy("event.sale_start_at", "ASC") // 再依售票開始時間排序
-            .limit(16) // 只取 16 筆
+            .limit(8) // 只取 8 筆
             .getRawMany();
 
         return comingEvents
 
     } catch (error) {
-        if (error.status) {
-            throw error;
-        }
         logger.error(`[getComingEventsData] 取得即將到來活動失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
@@ -463,26 +460,26 @@ const getTrendEventsData = async () => {
 
         const trendEvents = await dataSource.getRepository('Event')
             .createQueryBuilder("event")
+            .innerJoin('event.Type', 'type')
             .select([
                 "event.id AS id",
                 "event.title AS title",
                 "event.cover_image_url AS cover_image_url",
                 "event.start_at AS start_at",
-                "event.city AS city"
+                "event.city AS city",
+                "event.view_count AS view_count",
+                "type.name AS type"
             ])
             .where("event.end_at > NOW()") // 活動尚未結束
             .andWhere("event.status=:status", { status: EVENT_STATUS.APPROVED })
             .orderBy("event.view_count", "DESC") // 瀏覽數高到低
-            .addOrderBy("event.start_at", "ASC") // 再依開始時間排序
-            .limit(16) // 只取 16 筆
+            .addOrderBy("event.start_at", "ASC") // 瀏覽數相同則再依開始時間排序
+            .limit(15) // 只取 15 筆
             .getRawMany();
 
 
         return trendEvents
     } catch (error) {
-        if (error.status) {
-            throw error;
-        }
         logger.error(`[getTrendEventsData] 取得熱門推薦活動失敗: ${error}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }

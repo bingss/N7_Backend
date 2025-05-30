@@ -5,12 +5,13 @@ const router = express.Router()
 const { dataSource } = require('../db/data-source')
 const handleErrorAsync = require('../utils/handleErrorAsync')
 const userController = require('../controllers/user')
-
 const isAuth = require('../middlewares/auth')({
   secret: config.get('secret').jwtSecret,
   userRepository: dataSource.getRepository('User'),
   logger
 })
+
+
 
 // 註冊 & 登入
 router.post('/signup', handleErrorAsync(userController.postSignup));

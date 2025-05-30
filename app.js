@@ -8,10 +8,10 @@ const organizerRouter = require('./routes/organizer')
 const ordersRouter = require('./routes/orders')
 const indexRouter = require('./routes/index')
 const eventsRouter = require('./routes/events')
-
+const googleRouter = require('./routes/google')
 
 const app = express()
-// view engine setup
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
@@ -46,6 +46,7 @@ app.use('/api/v1/users', userRouter)
 app.use('/api/v1/organizer', organizerRouter)
 app.use('/api/v1/orders', ordersRouter)
 app.use('/api/v1/events', eventsRouter)
+app.use('/api/v1/google', googleRouter)
 app.use('/api/v1/', indexRouter)
 
 // eslint-disable-next-line no-unused-vars
