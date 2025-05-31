@@ -33,17 +33,9 @@ passport.use(new GoogleStrategy({
 //   res.render('index', { title: 'Express', Host: `http://localhost:8080/api/v1/google/bind` } );
 // });
 
-router.get('/signin-or-signup' , passport.authenticate('google', {
-  scope: [ 'email', 'profile'],
-  state: Buffer.from(JSON.stringify({ mode:'login' })).toString('base64')
-}));
-
+router.get('/signin-or-signup', handleErrorAsync(googleController.signinOrSignup) );
 
 router.get('/bind', isAuth, handleErrorAsync(googleController.generateAuthUrl) );
-// router.get('/bind', isAuth, passport.authenticate('google', {
-//   scope: ['email', 'profile'],
-//   state: 'bind'
-// }));
 
 router.get('/callback',  googleController.googleCallback)
 

@@ -25,6 +25,8 @@
       <!-- </form> -->
       <!-- <a :href="host">取得訂單資訊</a> -->
          <!-- <a :href="host"> -->
+            <input type="text" v-model="redirectUri" />
+            <button @click="handleGoogleBind">Google 綁定</button>
             <button @click="handleGoogleLogin">Google 登入</button>
           <!-- </a> -->
     </div>
@@ -54,14 +56,15 @@
                 ]
             },
             token: '',
+            redirectUri:'http://localhost:8080/api/v1/google',
             result:{}
           }
         },
         methods: {
-            async handleGoogleLogin() {
+            async handleGoogleBind() {
               try {
                 const res = await axios.get(
-                  'http://localhost:8080/api/v1/google/bind',
+                  `http://localhost:8080/api/v1/google/bind?redirectUri=${this.redirectUri}`,
                   {
                     headers: {
                       'Content-Type': 'application/json',
@@ -69,7 +72,6 @@
                     }
                   }
                 )
-                console.log(res)
                 const redirectUrl = res.data.data.redirectUrl
                 if (redirectUrl) {
                   window.location.href = redirectUrl // 導向 Google 授權頁面
@@ -79,6 +81,14 @@
               } catch (err) {
                 console.error('綁定錯誤:', err)
                 alert('綁定 Google 帳號失敗，請稍後再試')
+              }
+            },
+            async handleGoogleLogin() {
+              try {
+                window.location.href = `http://localhost:8080/api/v1/google/signin-or-signup?redirectUri=${this.redirectUri}`
+              } catch (err) {
+                console.error('綁定錯誤:', err)
+                alert('登入 Google 帳號失敗，請稍後再試')
               }
             }
           },
