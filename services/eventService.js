@@ -541,7 +541,7 @@ const getEventID = async (eventID) => {
     }
 }
 
-// // 含座位
+// 含座位
 // const getEventID = async () => {
 //     try {
 //     // 抓活動主資料與關聯 Type、Section、Seat

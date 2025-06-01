@@ -39,8 +39,8 @@ const getTrendEvents = async (req, res, next) => {
 }
 
 const getEventID = async (req, res, next) => {
-    //取得活動尚未結束且瀏覽數最高之16個活動
-    const events = await getTrendEventsData()
+    const { event_id } = req.params;
+    const event = await eventService.getEventID(event_id);
 
     res.status(200).json({
         status: true,
