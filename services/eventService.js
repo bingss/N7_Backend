@@ -513,88 +513,86 @@ const getAllEventsData = async () => {
 }
 
 // 不含座位
-const getEventID = async (eventID) => {
+// const getEventById = async (eventId) => {
+//     try {
+//         const queryBuilder = dataSource.getRepository('Event')
+//             .createQueryBuilder('event')
+//             .innerJoin('event.Type', 'type')
+//             .select([
+//                 'event.id AS id',
+//                 'event.title AS title',
+//                 'event.cover_image_url AS cover_image_url',
+//                 'event.description AS description',
+//                 'DATE(event.start_at) AS start_at',
+//                 'type.name AS type',
+//                 'event.city AS city'
+//             ])
+//             .where('event.id = :id', { id: eventId })
+//             .andWhere('event.status = :status', { status: 'approved' })
+//         // .getRawOne();
+//         console.log('🧪 SQL:', queryBuilder.getSql());
+//         console.log('🧪 Params:', queryBuilder.getParameters());
+
+//         const event = await queryBuilder.getRawOne();
+
+//         if (!event) {
+//             throw appError(404, '找不到該活動',);
+//         }
+
+//         return event;
+//     } catch (error) {
+//         // 如果是自訂錯誤，直接拋出；否則包裝成 appError 拋出
+//         if (error.status) {
+//             throw error;
+//         }
+//         console.error('🔥 getEventId error:', error);
+//         throw appError(400, '發生錯誤');
+//     }
+// }
+
+// 含座位
+const getEventById = async (eventId) => {
     try {
+        const ticket = await dataSource.getRepository('Ticket')
+            .createQueryBuilder('ticket')
+            .leftJoinAndSelect('ticket.Seat', 'Seat') // ✅
+            .getOne();
+
+        console.log(ticket);
+
+        const seat = await dataSource.getRepository('Seat')
+            .createQueryBuilder('Seat')
+            .leftJoinAndSelect('Seat.Ticket', 'Ticket') // ✅
+            .getOne();
+
+        console.log(seat);
+
         const event = await dataSource.getRepository('Event')
             .createQueryBuilder('event')
-            .innerJoin('event.Type', 'type')
-            .select([
-                'event.id AS id',
-                'event.title AS title',
-                'event.cover_image_url AS cover_image_url',
-                'event.description AS description',
-                'DATE(event.start_at) AS start_at',
-                'type.name AS type',
-                'event.city AS city'
-            ])
+            .leftJoinAndSelect('event.Type', 'type')
+            .leftJoinAndSelect('event.Section', 'section')
+            .leftJoinAndSelect('section.Seat', 'seat')
+            // .leftJoinAndSelect('seat.Ticket', 'ticket')
             .where('event.id = :id', { id: eventId })
             .andWhere('event.status = :status', { status: 'approved' })
-            .getRawOne();
+            .getOne(); // ⚠️ 回傳巢狀物件而非 raw flat 結果
+
+        // console.log('🧪 SQL:', queryBuilder.getSql());
+        // console.log('🧪 Params:', queryBuilder.getParameters());
 
         if (!event) {
-            throw new AppError('找不到該活動', 404);
+            throw appError(404, '找不到該活動');
         }
 
         return event;
     } catch (error) {
-        throw appError(ERROR_STATUS_CODE, '發生錯誤');
+        if (error.status) {
+            throw error;
+        }
+        console.error('🔥 getEventById error:', error);
+        throw appError(400, '發生錯誤');
     }
-}
-
-// 含座位
-// const getEventID = async () => {
-//     try {
-//     // 抓活動主資料與關聯 Type、Section、Seat
-//     const eventRepository = dataSource.getRepository('Event');
-//     const event = await eventRepository.findOne({
-//       where: {
-//         id: eventId,
-//         status: 'approved'
-//       },
-//       relations: {
-//         Type: true,
-//         Section: {
-//           Seats: true
-//         }
-//       }
-//     });
-
-//     if (!event) {
-//       throw appError(404, '找不到該活動');
-//     }
-
-//     // 整理回傳格式（避免直接把 entity 原樣回傳）
-//     const formatted = {
-//       id: event.id,
-//       title: event.title,
-//       description: event.description,
-//       city: event.city,
-//       address: event.address,
-//       start_at: event.start_at,
-//       end_at: event.end_at,
-//       cover_image_url: event.cover_image_url,
-//       section_image_url: event.section_image_url,
-//       view_count: event.view_count,
-//       type: event.Type?.name || null,
-//       sections: event.Section?.map(section => ({
-//         id: section.id,
-//         name: section.name,
-//         price: section.price,
-//         total_seats: section.total_seats,
-//         seats: section.Seats?.map(seat => ({
-//           id: seat.id,
-//           code: seat.code,
-//           status: seat.status
-//         })) || []
-//       })) || []
-//     };
-
-//     return formatted;
-//   } catch (error) {
-//     console.error(error);
-//     throw appError(500, '發生伺服器錯誤');
-//   }
-// }
+};
 
 
 module.exports = {
@@ -607,5 +605,5 @@ module.exports = {
     getComingEventsData,
     getTrendEventsData,
     getAllEventsData,
-    getEventID
+    getEventById
 }

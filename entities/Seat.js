@@ -29,7 +29,7 @@ module.exports = new EntitySchema({
     Section: {
       type: "many-to-one",
       target: "Section",
-      inverseSide: "Seat",
+      inverseSide: "seats",
       joinColumn: {
         name: "section_id",
         referencedColumnName: 'id',
@@ -41,7 +41,7 @@ module.exports = new EntitySchema({
       type: "one-to-one",
       target: "Ticket",
       inverseSide: "Seat",
-      mappedBy: "Seat"
+      // mappedBy: "Seat"
     }
 
   }
