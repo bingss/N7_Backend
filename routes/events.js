@@ -17,6 +17,6 @@ router.get('/coming-soon', handleErrorAsync(eventsController.getComingEvents))
 router.get('/trend', handleErrorAsync(eventsController.getTrendEvents))
 
 // 取得單一活動列表
-router.get('/:eventID', handleErrorAsync(eventsController.getSingleEvent))
+router.get('/:event_id', handleErrorAsync(eventsController.getEventID))
 
 module.exports = router

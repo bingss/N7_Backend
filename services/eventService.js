@@ -287,7 +287,7 @@ const getOrgEventsData = async (orgUserId) => {
                 ticket_purchaced: parseInt(event.ticket_purchaced, 10)
             }
             const now = new Date();
-            const nowGmt8 = new Date( now.getTime() + 8 * 60 * 60 * 1000 );
+            const nowGmt8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
             const end = new Date(noStatusOrders.end_at);
 
             // 判斷狀態分類
@@ -512,6 +512,91 @@ const getAllEventsData = async () => {
     }
 }
 
+// 不含座位
+const getEventID = async (eventID) => {
+    try {
+        const event = await dataSource.getRepository('Event')
+            .createQueryBuilder('event')
+            .innerJoin('event.Type', 'type')
+            .select([
+                'event.id AS id',
+                'event.title AS title',
+                'event.cover_image_url AS cover_image_url',
+                'event.description AS description',
+                'DATE(event.start_at) AS start_at',
+                'type.name AS type',
+                'event.city AS city'
+            ])
+            .where('event.id = :id', { id: eventId })
+            .andWhere('event.status = :status', { status: 'approved' })
+            .getRawOne();
+
+        if (!event) {
+            throw new AppError('找不到該活動', 404);
+        }
+
+        return event;
+    } catch (error) {
+        throw appError(ERROR_STATUS_CODE, '發生錯誤');
+    }
+}
+
+// // 含座位
+// const getEventID = async () => {
+//     try {
+//     // 抓活動主資料與關聯 Type、Section、Seat
+//     const eventRepository = dataSource.getRepository('Event');
+//     const event = await eventRepository.findOne({
+//       where: {
+//         id: eventId,
+//         status: 'approved'
+//       },
+//       relations: {
+//         Type: true,
+//         Section: {
+//           Seats: true
+//         }
+//       }
+//     });
+
+//     if (!event) {
+//       throw appError(404, '找不到該活動');
+//     }
+
+//     // 整理回傳格式（避免直接把 entity 原樣回傳）
+//     const formatted = {
+//       id: event.id,
+//       title: event.title,
+//       description: event.description,
+//       city: event.city,
+//       address: event.address,
+//       start_at: event.start_at,
+//       end_at: event.end_at,
+//       cover_image_url: event.cover_image_url,
+//       section_image_url: event.section_image_url,
+//       view_count: event.view_count,
+//       type: event.Type?.name || null,
+//       sections: event.Section?.map(section => ({
+//         id: section.id,
+//         name: section.name,
+//         price: section.price,
+//         total_seats: section.total_seats,
+//         seats: section.Seats?.map(seat => ({
+//           id: seat.id,
+//           code: seat.code,
+//           status: seat.status
+//         })) || []
+//       })) || []
+//     };
+
+//     return formatted;
+//   } catch (error) {
+//     console.error(error);
+//     throw appError(500, '發生伺服器錯誤');
+//   }
+// }
+
+
 module.exports = {
     createNewEvent,
     getEditEventData,
@@ -521,5 +606,6 @@ module.exports = {
     getStausOrgEventsData,
     getComingEventsData,
     getTrendEventsData,
-    getAllEventsData
+    getAllEventsData,
+    getEventID
 }

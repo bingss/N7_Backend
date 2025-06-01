@@ -38,8 +38,20 @@ const getTrendEvents = async (req, res, next) => {
     })
 }
 
+const getEventID = async (req, res, next) => {
+    //取得活動尚未結束且瀏覽數最高之16個活動
+    const events = await getTrendEventsData()
+
+    res.status(200).json({
+        status: true,
+        message: `取得資料成功`,
+        data: events
+    })
+}
+
 module.exports = {
     getAllEvents,
     getComingEvents,
-    getTrendEvents
+    getTrendEvents,
+    getEventID
 }
