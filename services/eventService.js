@@ -639,10 +639,21 @@ const getCheckingEvent = async (eventId) => {
 const updateEventStatus = async (eventId, isApproved) => {
     try {
         const eventRepository = dataSource.getRepository('Event')
+        const nowEvent = await eventRepository.findOne({
+            select: ['status'],
+            where: { id: eventId }
+        })
+        if (!nowEvent) {
+            throw appError(ERROR_STATUS_CODE, '活動不存在')
+        }
+        
         let newStatus;
         let check_at = null;
-        
+
         if(isApproved){
+            if (nowEvent.status !== EVENT_STATUS.APPROVED) {
+                throw appError(ERROR_STATUS_CODE, '活動已審核通過')
+            }
             newStatus = EVENT_STATUS.APPROVED
             check_at = new Date();
         }else{

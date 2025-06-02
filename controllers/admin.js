@@ -9,13 +9,10 @@ const { uploadImage } = require('../utils/imageUtils')
 const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
 const { decodeTicketQrcode } = require('../utils/qrcodeUtils')
 const { EVENT_STATUS, EVENT_CHINESE_STATUS, USER_ROLE, USER_STATUS } = require('../enums/index')
-const { extractAndValidateCity } = require('../utils/cityUtils')
 const ERROR_STATUS_CODE = 400;
-
 
 const getUsers = async (req, res, next) => {
     const users = await userService.getUsersData()
-
     res.status(200).json({
         status: true,
         message: "取得成功",
@@ -54,11 +51,6 @@ const patchUserStatus = async (req, res, next) => {
             isBlocked : isBlocked
         }
     })
-
-  return res.json({
-    message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
-    isBlocked: user.isBlocked,
-  });
 };
 
 const patchEventStatus = async (req, res, next) => {
