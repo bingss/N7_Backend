@@ -85,6 +85,7 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
                     "user.id AS id",
                     "user.name AS name",
                     "user.role AS role",
+                    "user.status AS status",
                     "accountauth.provider As provider",
                     "accountauth.provider_id As provider_id"
                 ])
