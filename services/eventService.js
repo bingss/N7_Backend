@@ -131,11 +131,14 @@ const updateEvent = async (newEventData, eventId, userId) => {
             throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
         }
 
+        if (originalEventData.status === EVENT_STATUS.REJECTED) {
+            newEventData.status = EVENT_STATUS.CHECKING
+        }
         originalEventData.start_at = formatDatabaseDate(originalEventData.start_at)
         originalEventData.end_at = formatDatabaseDate(originalEventData.end_at)
         originalEventData.sale_start_at = formatDatabaseDate(originalEventData.sale_start_at)
         originalEventData.sale_end_at = formatDatabaseDate(originalEventData.sale_end_at)
-
+        
         const changedData = await compareChangedData(originalEventData, newEventData, eventId)
 
         let updatedEventResult = 0
@@ -221,7 +224,7 @@ const getEditEventData = async (orgUserId, eventId) => {
         if (!eventWithSections || eventWithSections.length === 0) {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
-        console.log(eventWithSections)
+        // console.log(eventWithSections)
         if (eventWithSections[0].status === EVENT_STATUS.APPROVED) {
             throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得編輯')
         }
@@ -512,6 +515,173 @@ const getAllEventsData = async () => {
     }
 }
 
+const getAdminEvents = async () => {
+    try {
+        const eventRepository = dataSource.getRepository('Event')
+        const adminEvents = await eventRepository
+            .createQueryBuilder("event")
+            .leftJoin("event.Section", "section")
+            .leftJoin('section.Seat', 'seat')
+            .select([
+                "event.id AS id",
+                "event.title AS title",
+                "event.cover_image_url AS cover_image_url",
+                "event.location AS location",
+                "event.start_at AS start_at",
+                "event.end_at AS end_at",
+                "event.status AS status",
+                "event.sale_start_at AS sale_start_at",
+                "event.sale_end_at AS sale_end_at",
+                "COUNT(seat.id) AS ticket_total",
+                "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
+            ])
+            .groupBy("event.id")
+            .orderBy("event.start_at", "ASC")
+            .getRawMany();
+
+        const formatEvents = {
+            events: adminEvents.length === 0 ? [] : adminEvents.map(event => (
+            {
+                id: event.id,
+                title: event.title,
+                cover_image_url: event.cover_image_url,
+                location: event.location,
+                start_at: formatDatabaseDate(event.start_at),
+                end_at: formatDatabaseDate(event.end_at),
+                sale_status: getSaleStatus(event),
+                sale_rate: parseInt(event.ticket_purchaced, 10) / parseInt(event.ticket_total, 10)
+            }))
+        };    
+
+        return formatEvents
+    } catch (error) {
+        logger.error(`[getAdminEvents] 取得活動列表失敗: ${error}`)
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+}
+
+const getCheckingEvent = async (eventId) => {
+    try {
+        const eventWithSections = await dataSource.getRepository('Event')
+            .createQueryBuilder("event")
+            .leftJoin("event.Type", "type")
+            .leftJoin("event.User", "user")
+            .leftJoin("event.Section", "section")
+            .leftJoin("section.Seat", "seat")
+            .where("event.id = :eventId", { eventId })
+            .select([
+                "user.id AS organizer_id",
+                "user.name AS organizer",
+
+                "event.id AS event_id",
+                "event.title AS title",
+                "event.cover_image_url AS cover_image_url",
+                "event.section_image_url AS section_image_url",
+                "event.address AS address",
+                "event.location AS location",
+                "event.start_at AS start_at",
+                "event.end_at AS end_at",
+                "event.performance_group AS performance_group",
+                "event.description AS description",
+                "type.name AS type",
+                "event.status AS status",
+                "event.sale_start_at AS sale_start_at",
+                "event.sale_end_at AS sale_end_at",
+                "event.status AS status",
+
+                'section.section AS section_name',
+                'section.price_default AS price',
+                'COUNT(seat.id) AS quantity'
+            ])
+            .groupBy('event.id, user.id, section.id, type.id')
+            .getRawMany();
+
+        if (!eventWithSections || eventWithSections.length === 0) {
+            throw appError(ERROR_STATUS_CODE, '活動不存在')
+        }
+
+        // if (eventWithSections[0].status !== EVENT_STATUS.CHECKING) {
+        //     throw appError(ERROR_STATUS_CODE, '非屬審核中活動狀態')
+        // }
+
+        const eventInfo = {
+            organizer_id: eventWithSections[0].organizer_id,
+            organizer: eventWithSections[0].organizer,
+            event_id: eventWithSections[0].event_id,
+            title: eventWithSections[0].title,
+            location: eventWithSections[0].location,
+            address: eventWithSections[0].address,
+            start_at: eventWithSections[0].start_at,
+            end_at: eventWithSections[0].end_at,
+            sale_start_at: eventWithSections[0].sale_start_at,
+            sale_end_at: eventWithSections[0].sale_end_at,
+            performance_group: eventWithSections[0].performance_group,
+            description: eventWithSections[0].description,
+            type: eventWithSections[0].type,
+            cover_image_url: eventWithSections[0].cover_image_url,
+            section_image_url: eventWithSections[0].section_image_url,
+            status: eventWithSections[0].status,
+            sections: eventWithSections.map(row => ({
+                section_name: row.section_name,
+                price: row.price,
+                quantity: parseInt(row.quantity, 10)
+            }))
+        };
+
+        return eventInfo
+
+    } catch (error) {
+        logger.error(`[getAdminEvent] 取得單一活動失敗: ${error}`)
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+}
+
+const updateEventStatus = async (eventId, isApproved) => {
+    try {
+        const eventRepository = dataSource.getRepository('Event')
+        const nowEvent = await eventRepository.findOne({
+            select: ['status'],
+            where: { id: eventId }
+        })
+        if (!nowEvent) {
+            throw appError(ERROR_STATUS_CODE, '活動不存在')
+        }
+        
+        let newStatus;
+        let check_at = null;
+
+        if(isApproved){
+            if (nowEvent.status !== EVENT_STATUS.APPROVED) {
+                throw appError(ERROR_STATUS_CODE, '活動已審核通過')
+            }
+            newStatus = EVENT_STATUS.APPROVED
+            check_at = new Date();
+        }else{
+            newStatus = EVENT_STATUS.REJECTED
+        }
+
+        const updatedEvent = await eventRepository.update(
+            { id: eventId },
+            { status: newStatus,check_at: check_at  }
+        );
+
+        if (updatedEvent.affected === 0) {
+            throw appError(ERROR_STATUS_CODE, '更新活動狀態失敗')
+        }
+
+        const event = await eventRepository.findOne({
+            select: ['id', 'status', 'check_at'],
+            where: { id: eventId }
+        })
+
+        return event
+    } catch (error) {
+        logger.error(`[updateEventStatus] 更新活動狀態失敗: ${error}`)
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+}
+
+
 module.exports = {
     createNewEvent,
     getEditEventData,
@@ -521,5 +691,24 @@ module.exports = {
     getStausOrgEventsData,
     getComingEventsData,
     getTrendEventsData,
-    getAllEventsData
+    getAllEventsData,
+    getAdminEvents,
+    getCheckingEvent,
+    updateEventStatus
+}
+
+
+function getSaleStatus(event) {
+    const now = new Date();
+    const saleStartAt = new Date(event.sale_start_at);
+    const saleEndAt = new Date(event.sale_end_at);
+    if (event.status === EVENT_STATUS.CHECKING) {
+        return '待審核';
+    } else if (saleStartAt <= now && now <= saleEndAt) {
+        return '銷售中';
+    } else if (now > saleEndAt) {
+        return '銷售結束';
+    } else {
+        return '尚未銷售';
+    }
 }
