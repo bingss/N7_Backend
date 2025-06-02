@@ -512,7 +512,7 @@ const getAllEventsData = async () => {
         };
     } catch (error) {
         if (error.status) {
-            throw err
+            throw error
         }
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
@@ -560,7 +560,7 @@ const getAdminEvents = async () => {
     } catch (error) {
         logger.error(`[getAdminEvents] 取得活動列表失敗: ${error}`)
         if (error.status) {
-            throw err
+            throw error
         }
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
@@ -639,7 +639,7 @@ const getCheckingEvent = async (eventId) => {
     } catch (error) {
         logger.error(`[getAdminEvent] 取得單一活動失敗: ${error}`)
         if (error.status) {
-            throw err
+            throw error
         }
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
@@ -687,7 +687,7 @@ const updateEventStatus = async (eventId, isApproved) => {
     } catch (error) {
         logger.error(`[updateEventStatus] 更新活動狀態失敗: ${error}`)
         if (error.status) {
-            throw err
+            throw error
         }
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
