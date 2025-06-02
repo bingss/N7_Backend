@@ -180,10 +180,20 @@ const getUsersData = async () => {
                 .addGroupBy("user.name")
                 .addGroupBy("user.role")
                 .getRawMany();
-
-        return users
+        const formatUsers = users.map(user => ({
+                id: user.id,
+                serialNo: user.serialNo,
+                name: user.name,
+                // role: user.role,
+                count: parseInt(user.count, 10),
+                isBlocked: user.isBlocked === 'true' ? true : false
+            }))
+        return formatUsers
     }catch (err) {
         logger.error(`[getUsersData]${err}`)
+        if (err.status) {
+            throw err
+        }
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
 }
@@ -216,7 +226,7 @@ const getOneUserData = async (userId) => {
                 .orderBy("event.start_at", "ASC")
                 .getRawMany();
             
-            if (userWithInfos.length === 0) throw appError(ERROR_STATUS_CODE, '使用者不存在');
+            if (userWithInfos.length === 0) throw appError(400, '使用者不存在');
 
             const base = userWithInfos[0];
             const formatUser = {
@@ -241,6 +251,9 @@ const getOneUserData = async (userId) => {
 
         return formatUser
     }catch (err) {
+        if (err.status) {
+            throw err
+        }
         logger.error(`[getOneUserData]${err}`)
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
@@ -263,6 +276,9 @@ const updateUserStatus = async(userId) => {
         return isBlocked
     }catch (err) {
         logger.error(`[getUsersData]${err}`)
+        if (err.status) {
+            throw err
+        }
         throw appError(ERROR_STATUS_CODE, '發生錯誤')
     }
 }
