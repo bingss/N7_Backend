@@ -94,6 +94,9 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
             if ( existingUsers.length !== 0) {
                 const googleUser = existingUsers.find( ( user ) => user.provider === currentProvider && user.provider_id === currentProviderId)
                 if( googleUser ){
+                    if(user.status === USER_STATUS.BLOCKED){
+                        throw new error('使用者已被封鎖，無法登入');
+                    }
                     return cb(null, googleUser, cbStateData);
                 }
                 return cb( null, false, { googleErrorRedirect: `${redirectURL}?error=email_used` } ); //Email已被使用，使用其他方式登入後，綁定Google帳號

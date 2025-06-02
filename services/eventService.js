@@ -660,7 +660,7 @@ const updateEventStatus = async (eventId, isApproved) => {
         let check_at = null;
 
         if(isApproved){
-            if (nowEvent.status !== EVENT_STATUS.APPROVED) {
+            if (nowEvent.status === EVENT_STATUS.APPROVED) {
                 throw appError(ERROR_STATUS_CODE, '活動已審核通過')
             }
             newStatus = EVENT_STATUS.APPROVED
