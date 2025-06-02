@@ -94,7 +94,7 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
             if ( existingUsers.length !== 0) {
                 const googleUser = existingUsers.find( ( user ) => user.provider === currentProvider && user.provider_id === currentProviderId)
                 if( googleUser ){
-                    if(user.status === USER_STATUS.BLOCKED){
+                    if(googleUser.status === USER_STATUS.BLOCKED){
                         throw new error('使用者已被封鎖，無法登入');
                     }
                     return cb(null, googleUser, cbStateData);
