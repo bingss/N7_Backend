@@ -88,7 +88,7 @@ const postPaymentNotify = async (req, res, next) => {
         //   }
         // }
         // 取得交易內容，並查詢本地端資料庫是否有相符的訂單
-        await updateOrderStatus(data?.Result?.MerchantOrderNo);
+        await updateOrderStatus(data?.Result?.MerchantOrderNo, data?.Result?.PaymentType);
         // 交易完成，將成功資訊儲存於資料庫
         // console.log('付款完成，訂單：', orders[data?.Result?.MerchantOrderNo]);
 
