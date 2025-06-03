@@ -1,5 +1,5 @@
 const config = require('../config/index')
-const logger = require('../utils/logger')('TicketsService')
+const logger = require('../utils/logger')('OrdersService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { generateTicketQrcode } = require('../utils/qrcodeUtils')

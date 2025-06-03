@@ -1,6 +1,6 @@
 
 const config = require('../config/index')
-const logger = require('../utils/logger')('TicketsController')
+const logger = require('../utils/logger')('OrdersController')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { getOrdersData, getOneOrderData, createOrder ,updateOrderStatus } = require('../services/orderService')
@@ -120,7 +120,7 @@ const postPaymentReturn = async (req, res, next) => {
         res.redirect(`${config.get('newpay.returnUrl')}/${data?.Result?.MerchantOrderNo}`);
 
     }catch (error) {
-        logger.error(`[postPaymentReturn]${data?.Result?.MerchantOrderNo}付款返回錯誤：${error.message}`);
+        logger.error(`[postPaymentReturn]付款返回錯誤：${error.message}`);
         res.redirect(`${config.get('newpay.returnUrl')}/#/ErrorPage`);
     }
 }
