@@ -116,7 +116,7 @@ const postPaymentReturn = async (req, res, next) => {
         const data = orderUtils.create_mpg_aes_decrypt(response.TradeInfo) || 'error';
         const order = await dataSource.getRepository('Order').findOne({
             where: {
-                orderNo: data?.Result?.MerchantOrderNo
+                serialNo: data?.Result?.MerchantOrderNo
             },
             select: ['id']
         });
