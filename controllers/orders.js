@@ -6,7 +6,6 @@ const { dataSource } = require('../db/data-source')
 const { getOrdersData, getOneOrderData, createOrder ,updateOrderStatus } = require('../services/orderService')
 const { orderValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
 const orderUtils = require('../utils/orderUtils')
-const { Not } = require('typeorm')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -89,13 +88,13 @@ const postPaymentNotify = async (req, res, next) => {
         //   }
         // }
         // 取得交易內容，並查詢本地端資料庫是否有相符的訂單
-        await updateOrderStatus(data?.Result?.MerchantOrderNo,data?.Result?.PaymentType );
+        await updateOrderStatus(data?.Result?.MerchantOrderNo);
         // 交易完成，將成功資訊儲存於資料庫
         // console.log('付款完成，訂單：', orders[data?.Result?.MerchantOrderNo]);
 
         return res.end();
     }catch (error) {
-        logger.error(`[postPaymentNotify]${data?.Result?.MerchantOrderNo}付款狀態修改錯誤：${error.message}`);
+        logger.error(`[postPaymentNotify]付款狀態修改錯誤：${error.message}`);
         if (error.status) {
             throw error;
         }
@@ -116,11 +115,13 @@ const postPaymentReturn = async (req, res, next) => {
         // 解密交易內容
         const data = orderUtils.create_mpg_aes_decrypt(response.TradeInfo) || 'error';
         const order = await dataSource.getRepository('Order').findOne({
-            where: { serialNo: orderNo },
+            where: {
+                orderNo: data?.Result?.MerchantOrderNo
+            },
             select: ['id']
         });
-        ///tickets/:id/payment_result
-        res.redirect(`${config.get('newpay.returnUrl')}/tickets/${order.id}/payment_result`);
+        // /tickets/:id/payment_result
+        res.redirect(`${config.get('newpay.returnUrl')}/#/tickets${order.id}/payment_result`);
 
     }catch (error) {
         logger.error(`[postPaymentReturn]付款返回錯誤：${error.message}`);
