@@ -22,9 +22,10 @@ module.exports = new EntitySchema({
     },
     payment_status: {
       type: "varchar",
-      length: 20,
-      nullable: true,
-      default: 'pending',
+      length: 10,
+      nullable: false,
+      default:'pending',
+      comment: 'paid、pending、expired...'
     },
     created_at: {
       type: "timestamp",

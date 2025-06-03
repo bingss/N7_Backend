@@ -154,6 +154,18 @@ const proposeEventValid  = z.object({
     message: '分區名稱重複',
   });
 
+// 單一票券項目 schema
+const ticketSchema = z.object({
+  section_id: z.string().uuid(), // 驗證 UUID 格式
+  quantity: z.number().int().positive() // 整數且 > 0
+});
+
+// 整個訂單資料 schema
+const orderValid = z.object({
+  event_id: z.string().uuid(), // 驗證 UUID 格式
+  tickets: z.array(ticketSchema).min(1) // 至少要有一張票
+});
+
 
 module.exports = {
   isValidString,
@@ -166,7 +178,8 @@ module.exports = {
   isNotValidUuid,
   proposeEventValid,
   isValidUrl,
-  isRedirectUriAllowed
+  isRedirectUriAllowed,
+  orderValid
 }
 
 

@@ -3,7 +3,7 @@ const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { generateTicketQrcode } = require('../utils/qrcodeUtils')
-const { PAYMENT_METHOD,EVENT_STATUS  } = require('../enums/index')
+const { PAYMENT_METHOD,EVENT_STATUS,SEAT_STATUS  } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
 const createTestOrder = async (orderData, userId) => {
@@ -41,8 +41,7 @@ const createTestOrder = async (orderData, userId) => {
         //1. 新增訂單資料
         const newOrder = orderRepository.create({
             user_id: userId,
-            event_id: orderData.event_id,
-            payment_method: orderData.payment_method,
+            event_id: orderData.event_id
         })
 
         const savedOrder = await orderRepository.save(newOrder)
@@ -115,6 +114,113 @@ const createTestOrder = async (orderData, userId) => {
         return { order: savedOrder, tickets: newTickets };
     });
 }
+
+const createOrder = async (orderData, userId) => {
+    
+    return dataSource.transaction(async (manager) => {
+        const eventRepository = manager.getRepository('Event')
+        const orderRepository = manager.getRepository('Order')
+        const seatRepository = manager.getRepository('Seat')
+        const ticketRepository = manager.getRepository('Ticket')
+        const sectionRepository = manager.getRepository('Section')
+        
+        
+        //欄位檢查，正式版需再增加，檢查活動起訖時間、價錢檢查等
+        const orderEvent = await eventRepository.findOne({
+                    where: {  id: orderData.event_id },
+                    select: [ 'title', 'status','sale_start_at','sale_end_at' ],
+                });
+
+        if (!orderEvent) {
+            throw appError(ERROR_STATUS_CODE, `找無訂單輸入之活動`)
+        }
+        if(orderEvent.status != EVENT_STATUS.APPROVED){
+            throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
+        }
+        if(isNotSaling(orderEvent)){
+            throw appError(ERROR_STATUS_CODE, `非屬販售時間`)
+        }
+
+        const eventTitle = orderEvent.title
+        //1. 新增訂單資料
+        const newOrder = orderRepository.create({
+            user_id: userId,
+            event_id: orderData.event_id
+        })
+
+        const savedOrder = await orderRepository.save(newOrder)
+        if (!savedOrder) {
+            throw appError(ERROR_STATUS_CODE, '新增訂單失敗')
+        }
+        const orderNo = savedOrder.serialNo
+
+        // 2. 彙整 section 所需票券數量，避免前端重複傳相同sectionId
+        const orderTickets = orderData.tickets
+        const sectionDemandMap = new Map(); // Map<sectionId, count>
+        for (const ticket of orderTickets) {
+            sectionDemandMap.set(
+                ticket.section_id,
+                (sectionDemandMap.get(ticket.section_id) || 0) + ticket.quantity
+            );
+        }
+
+
+        // 3. 一次查出每個 section 的 available seats
+        const seatAssignments = new Map(); // Map<sectionId, { seats: Seat[], price: number }>
+        for (const [sectionId, count] of sectionDemandMap.entries()) {
+
+            const sectionData = await sectionRepository.findOne({
+                        where: {  id: sectionId, event_id : orderData.event_id },
+                        select: [ 'section', 'price_default' ],
+                    });
+            if (!sectionData) {
+                throw appError(ERROR_STATUS_CODE, `活動或資訊輸入錯誤`)
+            }
+
+            const availableSeats = await seatRepository
+                .createQueryBuilder('seat')
+                .where('seat.status = :status', { status: 'available' })
+                .andWhere('seat.section_id = :sectionId', { sectionId: sectionId })
+                .orderBy('seat.seat_number', 'ASC')
+                .take(count)
+                .setLock('pessimistic_write')  // 加入悲觀鎖
+                .getMany();
+
+            if (availableSeats.length < count) {
+                throw appError(ERROR_STATUS_CODE, `${sectionData.section}區，不足${count}個座位`)
+            }
+            seatAssignments.set(sectionId, { seats: availableSeats, price: sectionData.price_default});
+        }
+        // 4. 配對 ticket 對應的 seat
+        const updatedSeats = [];
+        const newTickets = [];
+        let orderPrice = 0;
+
+        for (const ticket of orderTickets) {
+
+            const assignment = seatAssignments.get(ticket.section_id);
+            const seat = assignment.seats.shift(); // 拿一個可用 seat
+            const price = assignment.price;
+
+            seat.status = SEAT_STATUS.RESERVED;
+            updatedSeats.push(seat);
+
+            const newTicket = ticketRepository.create({
+                price_paid: price,
+                type: '全票',
+                seat_id: seat.id,
+                order_id: savedOrder.id,
+            });
+            newTickets.push(newTicket);
+            orderPrice += price
+        }
+        await seatRepository.save(updatedSeats);
+        await ticketRepository.save(newTickets);
+
+        return { eventTitle , orderNo, orderPrice  };
+    });
+}
+
 
 const getOrdersData = async ( userId ) => {
     try {
@@ -234,5 +340,18 @@ const getOneOrderData = async ( userId, orderId ) => {
 module.exports = {
     getOrdersData,
     getOneOrderData,
-    createTestOrder
+    createTestOrder,
+    createOrder
+}
+
+
+function isNotSaling(event) {
+    const now = new Date();
+    const saleStartAt = new Date(event.sale_start_at);
+    const saleEndAt = new Date(event.sale_end_at);
+    if (saleStartAt <= now && now <= saleEndAt) {
+        return false; // 正在銷售中
+    } else {
+        return true; // 非屬銷售中
+    }
 }
