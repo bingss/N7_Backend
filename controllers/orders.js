@@ -121,7 +121,7 @@ const postPaymentReturn = async (req, res, next) => {
             select: ['id']
         });
         // /tickets/:id/payment_result
-        res.redirect(`${config.get('newpay.returnUrl')}/#/tickets${order.id}/payment_result`);
+        res.redirect(`${config.get('newpay.returnUrl')}/#/tickets/${order.id}/payment_result`);
 
     }catch (error) {
         logger.error(`[postPaymentReturn]付款返回錯誤：${error.message}`);
