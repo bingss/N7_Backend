@@ -22,7 +22,6 @@ async function compareChangedData(originalData, newData, eventId) {
             }
         }
     }
-
     return changedData;
 }
 

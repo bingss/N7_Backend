@@ -7,17 +7,17 @@
   </head>
   <body>
     <div id="app">
-      {{result}}
-      <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
-        <input type="text" name="MerchantID" :value=order.MerchantID />
-        <input type="text" name="TradeSha" :value="order.TradeSha" />
-        <input
-          type="text"
-          name="TradeInfo"
-          :value="order.TradeInfo"
-        />
+      <!-- {{result}} -->
+      <!-- <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post"> -->
+        <!-- <input type="text" name="MerchantID" :value=order.MerchantID /> -->
+        <!-- <input type="text" name="TradeSha" :value="order.TradeSha" /> -->
+        <!-- <input -->
+          <!-- type="text" -->
+          <!-- name="TradeInfo" -->
+          <!-- :value="order.TradeInfo" -->
+        <!-- /> -->
         <!-- <input type="text" name="TimeStamp" :value="order.TimeStamp" /> -->
-        <input type="text" name="Version" :value=order.Version />
+        <!-- <input type="text" name="Version" :value=order.Version /> -->
         <!-- <input type="text" name="MerchantOrderNo" :value="order.MerchantOrderNo" />
         <input type="text" name="Amt" :value="order.Amt" />
         <input type="email" name="Email" :value="order.Email" /> -->
@@ -49,7 +49,8 @@
                     }
                 ]
             },
-            token: '方便jwttoken',
+            token: '',
+            redirectUri:'http://localhost:8080/api/v1/google',
             result:{}
           }
         },
