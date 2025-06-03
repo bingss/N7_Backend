@@ -31,7 +31,8 @@ const postOrder = async (req, res, next) => {
         ItemDesc: `${eventTitle}票券`,
         Email: req.user.email,
         TradeLimit : 900,
-        NoticeURL: `${config.get('newpay.host')}/orders/payment_notify`,
+        ReturnURL: `https://n7-backend.onrender.com/api/v1/orders/payment_return?MerchantOrderNo=${orderNo}`,
+        NotifyURL: `https://n7-backend.onrender.com/api/v1/orders/payment_notify`,
     }
     // 加密第一段字串，此段主要是提供交易內容給予藍新金流
     const aesEncrypt = orderUtils.create_mpg_aes_encrypt(order);
