@@ -584,6 +584,10 @@ const getEventById = async (eventId) => {
             throw appError(404, '找不到該活動');
         }
 
+        // ✅ 增加瀏覽次數
+        await dataSource.getRepository('Event')
+            .increment({ id: eventId }, 'view_count', 1);
+
         return event;
     } catch (error) {
         if (error.status) {

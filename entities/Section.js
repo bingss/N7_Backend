@@ -28,7 +28,7 @@ module.exports = new EntitySchema({
     Event: {
       type: "many-to-one",
       target: "Event",
-      inverseSide: "sections",
+      inverseSide: "Section",
       joinColumn: {
         name: "event_id",
         referencedColumnName: 'id',
