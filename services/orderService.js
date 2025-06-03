@@ -3,120 +3,10 @@ const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { generateTicketQrcode } = require('../utils/qrcodeUtils')
-const { PAYMENT_METHOD,EVENT_STATUS,SEAT_STATUS  } = require('../enums/index')
+const { PAYMENT_METHOD,EVENT_STATUS,SEAT_STATUS,PAYMENT_STATUS  } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
-const createTestOrder = async (orderData, userId) => {
-    return dataSource.transaction(async (manager) => {
-        const eventRepository = manager.getRepository('Event')
-        const orderRepository = manager.getRepository('Order')
-        const seatRepository = manager.getRepository('Seat')
-        const ticketRepository = manager.getRepository('Ticket')
-        const sectionRepository = manager.getRepository('Section')
-        
-        //欄位檢查，正式版需再增加，檢查活動起訖時間、價錢檢查等
-        if(orderData.tickets.length === 0){
-            throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤')
-        }
-        const orderEvent = await eventRepository.findOne({
-                    where: {  id: orderData.event_id },
-                    select: [ 'status','sale_start_at','sale_end_at' ],
-                });
-        if (!orderEvent) {
-            throw appError(ERROR_STATUS_CODE, `找無訂單輸入之活動`)
-        }
-        if(orderEvent.status != EVENT_STATUS.APPROVED){
-            throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
-        }          
-        const now = new Date();
-        const saleStart = new Date( orderEvent.sale_start_at );
-        const saleEnd = new Date( orderEvent.sale_end_at );
-        if (saleEnd < now) {
-            throw appError(ERROR_STATUS_CODE, `超過販售時間`)
-        } else if(now < saleStart){
-            throw appError(ERROR_STATUS_CODE, `未達販售時間`)
-        }
-
-
-        //1. 新增訂單資料
-        const newOrder = orderRepository.create({
-            user_id: userId,
-            event_id: orderData.event_id
-        })
-
-        const savedOrder = await orderRepository.save(newOrder)
-        if (!savedOrder) {
-            throw appError(ERROR_STATUS_CODE, '新增訂單失敗')
-        }
-
-
-        // 2. 統計每個 section 所需票券數量
-        const orderTickets = orderData.tickets
-        const sectionDemandMap = new Map(); // Map<sectionId, count>
-
-        for (const ticket of orderTickets) {
-            sectionDemandMap.set(
-                ticket.section_id,
-                (sectionDemandMap.get(ticket.section_id) || 0) + 1
-            );
-        }
-
-
-        // 3. 一次查出每個 section 的 available seats
-        const seatAssignments = new Map(); // Map<sectionId, Seat[]>
-        for (const [sectionId, count] of sectionDemandMap.entries()) {
-
-            const sectionData = await sectionRepository.findOne({
-                        where: {  id: sectionId, event_id : orderData.event_id },
-                        select: [ 'section' ],
-                    });
-            if (!sectionData) {
-                throw appError(ERROR_STATUS_CODE, `活動或資訊輸入錯誤`)
-            }
-
-            const availableSeats = await seatRepository
-                .createQueryBuilder('seat')
-                .where('seat.status = :status', { status: 'available' })
-                .andWhere('seat.section_id = :sectionId', { sectionId: sectionId })
-                .orderBy('seat.seat_number', 'ASC')
-                .take(count)
-                .setLock('pessimistic_write')  // 加入悲觀鎖
-                .getMany();
-
-            if (availableSeats.length < count) {
-                throw appError(ERROR_STATUS_CODE, `${sectionData.section}區，不足${count}個座位`)
-            }
-            seatAssignments.set(sectionId, availableSeats);
-        }
-        // 4. 配對 ticket 對應的 seat
-        const updatedSeats = [];
-        const newTickets = [];
-
-        for (const ticket of orderTickets) {
-            const availableSeats = seatAssignments.get(ticket.section_id);
-            const seat = availableSeats.shift(); // 拿第一張 seat
-
-            seat.status = 'sold';
-            updatedSeats.push(seat);
-
-            const newTicket = ticketRepository.create({
-                price_paid: ticket.price_paid,
-                type: ticket.type,
-                qrcode_img: '',
-                seat_id: seat.id,
-                order_id: savedOrder.id,
-            });
-            newTickets.push(newTicket);
-        }
-        await seatRepository.save(updatedSeats);
-        await ticketRepository.save(newTickets);
-
-        return { order: savedOrder, tickets: newTickets };
-    });
-}
-
 const createOrder = async (orderData, userId) => {
-    
     return dataSource.transaction(async (manager) => {
         const eventRepository = manager.getRepository('Event')
         const orderRepository = manager.getRepository('Order')
@@ -268,6 +158,7 @@ const getOneOrderData = async ( userId, orderId ) => {
             .andWhere("order.user_id = :userId", { userId: userId })
             .select([
                 "order.serialNo AS order_no",
+                "order.payment_status AS payment_status",
 
                 "user.name AS user_name",
                 "user.email AS user_email",
@@ -297,6 +188,7 @@ const getOneOrderData = async ( userId, orderId ) => {
         const base = rawTicket[0];
         const formatTicket = {
             order_no: base.order_no,
+            payment_status: base.payment_status,
             user: {
                 name: base.user_name,
                 email: base.user_email
@@ -336,12 +228,37 @@ const getOneOrderData = async ( userId, orderId ) => {
     }
 } 
 
+const updateOrderStatus = async ( orderNo ) => {
+    return dataSource.transaction(async (manager) => {
+        const orderRepository = manager.getRepository('Order')
+        const seatRepository = manager.getRepository('Seat')
+        const order = await orderRepository.findOne({
+            where: { serialNo: orderNo },
+            relations: ['Ticket', 'Ticket.Seat']
+        });
+        if (!order) {
+            throw appError(ERROR_STATUS_CODE, `找無訂單編號：${orderNo}`)
+        }
+        // 更新訂單狀態為已付款
+        order.payment_status = PAYMENT_STATUS.PAID;
+        await orderRepository.save(order);
+
+        // 更新座位狀態為已售出
+        const seats = order.Ticket.map(ticket => ticket.Seat);
+        for (const seat of seats) {
+            seat.status = SEAT_STATUS.SOLD;
+        }
+        await seatRepository.save(seats);
+
+        return;
+    })
+}
 
 module.exports = {
     getOrdersData,
     getOneOrderData,
-    createTestOrder,
-    createOrder
+    createOrder,
+    updateOrderStatus,
 }
 
 
@@ -355,3 +272,113 @@ function isNotSaling(event) {
         return true; // 非屬銷售中
     }
 }
+
+
+// const createTestOrder = async (orderData, userId) => {
+//     return dataSource.transaction(async (manager) => {
+//         const eventRepository = manager.getRepository('Event')
+//         const orderRepository = manager.getRepository('Order')
+//         const seatRepository = manager.getRepository('Seat')
+//         const ticketRepository = manager.getRepository('Ticket')
+//         const sectionRepository = manager.getRepository('Section')
+        
+//         //欄位檢查，正式版需再增加，檢查活動起訖時間、價錢檢查等
+//         if(orderData.tickets.length === 0){
+//             throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤')
+//         }
+//         const orderEvent = await eventRepository.findOne({
+//                     where: {  id: orderData.event_id },
+//                     select: [ 'status','sale_start_at','sale_end_at' ],
+//                 });
+//         if (!orderEvent) {
+//             throw appError(ERROR_STATUS_CODE, `找無訂單輸入之活動`)
+//         }
+//         if(orderEvent.status != EVENT_STATUS.APPROVED){
+//             throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
+//         }          
+//         const now = new Date();
+//         const saleStart = new Date( orderEvent.sale_start_at );
+//         const saleEnd = new Date( orderEvent.sale_end_at );
+//         if (saleEnd < now) {
+//             throw appError(ERROR_STATUS_CODE, `超過販售時間`)
+//         } else if(now < saleStart){
+//             throw appError(ERROR_STATUS_CODE, `未達販售時間`)
+//         }
+
+
+//         //1. 新增訂單資料
+//         const newOrder = orderRepository.create({
+//             user_id: userId,
+//             event_id: orderData.event_id
+//         })
+
+//         const savedOrder = await orderRepository.save(newOrder)
+//         if (!savedOrder) {
+//             throw appError(ERROR_STATUS_CODE, '新增訂單失敗')
+//         }
+
+
+//         // 2. 統計每個 section 所需票券數量
+//         const orderTickets = orderData.tickets
+//         const sectionDemandMap = new Map(); // Map<sectionId, count>
+
+//         for (const ticket of orderTickets) {
+//             sectionDemandMap.set(
+//                 ticket.section_id,
+//                 (sectionDemandMap.get(ticket.section_id) || 0) + 1
+//             );
+//         }
+
+
+//         // 3. 一次查出每個 section 的 available seats
+//         const seatAssignments = new Map(); // Map<sectionId, Seat[]>
+//         for (const [sectionId, count] of sectionDemandMap.entries()) {
+
+//             const sectionData = await sectionRepository.findOne({
+//                         where: {  id: sectionId, event_id : orderData.event_id },
+//                         select: [ 'section' ],
+//                     });
+//             if (!sectionData) {
+//                 throw appError(ERROR_STATUS_CODE, `活動或資訊輸入錯誤`)
+//             }
+
+//             const availableSeats = await seatRepository
+//                 .createQueryBuilder('seat')
+//                 .where('seat.status = :status', { status: 'available' })
+//                 .andWhere('seat.section_id = :sectionId', { sectionId: sectionId })
+//                 .orderBy('seat.seat_number', 'ASC')
+//                 .take(count)
+//                 .setLock('pessimistic_write')  // 加入悲觀鎖
+//                 .getMany();
+
+//             if (availableSeats.length < count) {
+//                 throw appError(ERROR_STATUS_CODE, `${sectionData.section}區，不足${count}個座位`)
+//             }
+//             seatAssignments.set(sectionId, availableSeats);
+//         }
+//         // 4. 配對 ticket 對應的 seat
+//         const updatedSeats = [];
+//         const newTickets = [];
+
+//         for (const ticket of orderTickets) {
+//             const availableSeats = seatAssignments.get(ticket.section_id);
+//             const seat = availableSeats.shift(); // 拿第一張 seat
+
+//             seat.status = 'sold';
+//             updatedSeats.push(seat);
+
+//             const newTicket = ticketRepository.create({
+//                 price_paid: ticket.price_paid,
+//                 type: ticket.type,
+//                 qrcode_img: '',
+//                 seat_id: seat.id,
+//                 order_id: savedOrder.id,
+//             });
+//             newTickets.push(newTicket);
+//         }
+//         await seatRepository.save(updatedSeats);
+//         await ticketRepository.save(newTickets);
+
+//         return { order: savedOrder, tickets: newTickets };
+//     });
+// }

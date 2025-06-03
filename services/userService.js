@@ -178,6 +178,7 @@ const getUsersData = async () => {
                     "user.id AS id",
                     "user.serialNo AS serialNo",
                     "user.name AS name",
+                    "user.email AS email",
                     // "user.role AS role",
                     "COUNT(ticket.id) AS count",
                     "(CASE WHEN user.status = 'active' THEN false ELSE true END) AS isBlocked"
@@ -191,6 +192,7 @@ const getUsersData = async () => {
                 id: user.id,
                 serialNo: user.serialNo,
                 name: user.name,
+                email: user.email,
                 // role: user.role,
                 count: parseInt(user.count, 10),
                 isBlocked: user.isBlocked === 'true' ? true : false
