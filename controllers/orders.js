@@ -49,10 +49,10 @@ const postOrder = async (req, res, next) => {
             }
         })
     }catch (error) {
+        logger.error(`[postOrder]發生錯誤：${error.message}`);
         if (error.status) {
             throw error;
         }
-        logger.error(`[postOrder]發生錯誤：${error.message}`);
         next(appError(ERROR_STATUS_CODE, '發生錯誤'));
         return;
     }
@@ -62,13 +62,12 @@ const postOrder = async (req, res, next) => {
 
 const postPaymentNotify = async (req, res, next) => {
     try{
-        // console.log('req.body notify data', req.body);
+        console.log('req.body notify data', req.body);
         const response = req.body;
         const thisShaEncrypt = orderUtils.create_mpg_sha_encrypt(response.TradeInfo);
         // 使用 HASH 再次 SHA 加密字串，確保比對一致（確保不正確的請求觸發交易成功）
         if (!thisShaEncrypt === response.TradeSha) {
             throw appError(ERROR_STATUS_CODE, `付款失敗：TradeSha 不一致`)
-            return res.end();
         }
         // 解密交易內容
         const data = orderUtils.create_mpg_aes_decrypt(response.TradeInfo);
@@ -90,17 +89,17 @@ const postPaymentNotify = async (req, res, next) => {
         //   }
         // }
         // 取得交易內容，並查詢本地端資料庫是否有相符的訂單
-        
+        console.log('req.body Notify data', data);
         await updateOrderStatus(data?.Result?.MerchantOrderNo);
         // 交易完成，將成功資訊儲存於資料庫
         // console.log('付款完成，訂單：', orders[data?.Result?.MerchantOrderNo]);
 
         return res.end();
     }catch (error) {
+        logger.error(`[postPaymentNotify]${data?.Result?.MerchantOrderNo}付款狀態修改錯誤：${error.message}`);
         if (error.status) {
             throw error;
         }
-        logger.error(`[postPaymentNotify]${data?.Result?.MerchantOrderNo}付款狀態修改錯誤：${error.message}`);
         next(appError(ERROR_STATUS_CODE, '發生錯誤'));
         return;
     }
@@ -108,7 +107,7 @@ const postPaymentNotify = async (req, res, next) => {
 
 const postPaymentReturn = async (req, res, next) => {
     try{
-        // console.log('req.body notify data', req.body);
+        console.log('req.body Return data', req.body);
         const response = req.body;
         const thisShaEncrypt = orderUtils.create_mpg_sha_encrypt(response.TradeInfo);
         // 使用 HASH 再次 SHA 加密字串，確保比對一致（確保不正確的請求觸發交易成功）
@@ -116,8 +115,9 @@ const postPaymentReturn = async (req, res, next) => {
             throw appError(ERROR_STATUS_CODE, `付款失敗：TradeSha 不一致`)
         }
         // 解密交易內容
-        const data = orderUtils.create_mpg_aes_decrypt(response.TradeInfo);
-        res.redirect(`${config.get('newpay.returnUrl')}/${data?.Result?.MerchantOrderNo}`);
+        const data = orderUtils.create_mpg_aes_decrypt(response.TradeInfo) || 'error';
+        console.log('req.body Return data', data);
+        res.redirect(`${config.get('newpay.returnUrl')}?order_no=${data?.Result?.MerchantOrderNo}`);
 
     }catch (error) {
         logger.error(`[postPaymentReturn]付款返回錯誤：${error.message}`);

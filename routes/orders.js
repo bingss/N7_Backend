@@ -12,9 +12,9 @@ const isAuth = require('../middlewares/auth')({
 })
 
 /* 金流測試用頁面*/
-// router.get('/test', (req, res) => {
-//   res.render('index', { title: 'Express', Host: `${config.get('newpay.host')}/orders/create` } );
-// });
+router.get('/test', (req, res) => {
+  res.render('index', { title: 'Express', Host: `${config.get('newpay.host')}/orders/create` } );
+});
 
 // 12.新增付款資訊(建立交易)(金流)
 router.post('/create', isAuth, handleErrorAsync(ordersController.postOrder))
