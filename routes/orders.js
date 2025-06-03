@@ -12,13 +12,13 @@ const isAuth = require('../middlewares/auth')({
 })
 
 /* 金流測試用頁面*/
-router.get('/', (req, res) => {
+router.get('/test', (req, res) => {
   res.render('index', { title: 'Express', Host: `${config.get('newpay.host')}/orders` } );
 });
 
 
 // // 交易成功：Return （可直接解密，將資料呈現在畫面上）
-// router.post('/payment_return', ordersController.postPaymentReturn);
+router.post('/payment_return', ordersController.postPaymentReturn);
 // 確認交易：Notify
 
 
