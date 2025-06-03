@@ -7,17 +7,18 @@
   </head>
   <body>
     <div id="app">
-      <!-- {{result}} -->
-      <!-- <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post"> -->
-        <!-- <input type="text" name="MerchantID" :value=order.MerchantID /> -->
-        <!-- <input type="text" name="TradeSha" :value="order.TradeSha" /> -->
-        <!-- <input -->
-          <!-- type="text" -->
-          <!-- name="TradeInfo" -->
-          <!-- :value="order.TradeInfo" -->
-        <!-- /> -->
+      {{result}}
+      <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
+        <input type="text" name="MerchantID" :value=order.MerchantID />
+        <input type="text" name="TradeSha" :value="order.TradeSha" />
+        <input
+          type="text"
+          name="TradeInfo"
+          :value="order.TradeInfo"
+        />
+        <input type="text" name="Version" :value=order.Version />
         <!-- <input type="text" name="TimeStamp" :value="order.TimeStamp" /> -->
-        <!-- <input type="text" name="Version" :value=order.Version /> -->
+        
         <!-- <input type="text" name="MerchantOrderNo" :value="order.MerchantOrderNo" />
         <input type="text" name="Amt" :value="order.Amt" />
         <input type="email" name="Email" :value="order.Email" /> -->
@@ -39,18 +40,15 @@
                 "tickets":[
                     {
                         "section_id": "aa93319b-39ef-42b3-bc80-fe56bfaf25f9",
-                        "type":"全票",
-                        "price_paid": 999
+                        "quantity": 1,
                     },
                     {
-                        "section_id": "aa93319b-39ef-42b3-bc80-fe56bfaf25f9",
-                        "type":"全票",
-                        "price_paid": 999
+                        "section_id": "1538b569-5564-4eea-be91-6cae733dc6e6",
+                        "quantity": 2,
                     }
                 ]
             },
-            token: '',
-            redirectUri:'http://localhost:8080/api/v1/google',
+            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4NmQ4YmYxNC1iNDdkLTRhZDYtYjZiOC1mODE1NTViZDU3ZGUiLCJpYXQiOjE3NDg5NTQ0MjQsImV4cCI6MTc1MTU0NjQyNH0.7isbJyhjUSdnysgPqVhIjxsf6SoEBEBK-FVl-sV7Zyo',
             result:{}
           }
         },

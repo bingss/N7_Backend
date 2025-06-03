@@ -130,22 +130,18 @@ const createOrder = async (orderData, userId) => {
                     where: {  id: orderData.event_id },
                     select: [ 'title', 'status','sale_start_at','sale_end_at' ],
                 });
+
         if (!orderEvent) {
             throw appError(ERROR_STATUS_CODE, `找無訂單輸入之活動`)
         }
         if(orderEvent.status != EVENT_STATUS.APPROVED){
             throw appError(ERROR_STATUS_CODE, `活動尚未審核通過`)
         }
-        const now = new Date();
-        const saleStart = new Date( orderEvent.sale_start_at );
-        const saleEnd = new Date( orderEvent.sale_end_at );
-        if (saleEnd < now) {
-            throw appError(ERROR_STATUS_CODE, `超過販售時間`)
-        } else if(now < saleStart){
-            throw appError(ERROR_STATUS_CODE, `未達販售時間`)
+        if(isNotSaling(orderEvent)){
+            throw appError(ERROR_STATUS_CODE, `非屬販售時間`)
         }
-        const eventTitle = orderEvent.title
 
+        const eventTitle = orderEvent.title
         //1. 新增訂單資料
         const newOrder = orderRepository.create({
             user_id: userId,
@@ -158,25 +154,24 @@ const createOrder = async (orderData, userId) => {
         }
         const orderNo = savedOrder.serialNo
 
-
-        // 2. 統計每個 section 所需票券數量
+        // 2. 彙整 section 所需票券數量，避免前端重複傳相同sectionId
         const orderTickets = orderData.tickets
         const sectionDemandMap = new Map(); // Map<sectionId, count>
         for (const ticket of orderTickets) {
             sectionDemandMap.set(
                 ticket.section_id,
-                (sectionDemandMap.get(ticket.section_id) || 0) + 1
+                (sectionDemandMap.get(ticket.section_id) || 0) + ticket.quantity
             );
         }
 
 
         // 3. 一次查出每個 section 的 available seats
-        const seatAssignments = new Map(); // Map<sectionId, Seat[]>
+        const seatAssignments = new Map(); // Map<sectionId, { seats: Seat[], price: number }>
         for (const [sectionId, count] of sectionDemandMap.entries()) {
 
             const sectionData = await sectionRepository.findOne({
                         where: {  id: sectionId, event_id : orderData.event_id },
-                        select: [ 'section' ],
+                        select: [ 'section', 'price_default' ],
                     });
             if (!sectionData) {
                 throw appError(ERROR_STATUS_CODE, `活動或資訊輸入錯誤`)
@@ -194,7 +189,7 @@ const createOrder = async (orderData, userId) => {
             if (availableSeats.length < count) {
                 throw appError(ERROR_STATUS_CODE, `${sectionData.section}區，不足${count}個座位`)
             }
-            seatAssignments.set(sectionId, availableSeats);
+            seatAssignments.set(sectionId, { seats: availableSeats, price: sectionData.price_default});
         }
         // 4. 配對 ticket 對應的 seat
         const updatedSeats = [];
@@ -202,20 +197,22 @@ const createOrder = async (orderData, userId) => {
         let orderPrice = 0;
 
         for (const ticket of orderTickets) {
-            const availableSeats = seatAssignments.get(ticket.section_id);
-            const seat = availableSeats.shift(); // 拿第一張 seat
+
+            const assignment = seatAssignments.get(ticket.section_id);
+            const seat = assignment.seats.shift(); // 拿一個可用 seat
+            const price = assignment.price;
 
             seat.status = SEAT_STATUS.RESERVED;
             updatedSeats.push(seat);
 
             const newTicket = ticketRepository.create({
-                price_paid: ticket.price_paid,
-                type: ticket.type,
+                price_paid: price,
+                type: '全票',
                 seat_id: seat.id,
                 order_id: savedOrder.id,
             });
             newTickets.push(newTicket);
-            orderPrice += newTicket.price_paid
+            orderPrice += price
         }
         await seatRepository.save(updatedSeats);
         await ticketRepository.save(newTickets);
@@ -345,4 +342,16 @@ module.exports = {
     getOneOrderData,
     createTestOrder,
     createOrder
+}
+
+
+function isNotSaling(event) {
+    const now = new Date();
+    const saleStartAt = new Date(event.sale_start_at);
+    const saleEndAt = new Date(event.sale_end_at);
+    if (saleStartAt <= now && now <= saleEndAt) {
+        return false; // 正在銷售中
+    } else {
+        return true; // 非屬銷售中
+    }
 }

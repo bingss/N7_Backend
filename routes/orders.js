@@ -11,22 +11,22 @@ const isAuth = require('../middlewares/auth')({
   logger
 })
 
-/* (金流測試) */
+/* 金流測試用頁面*/
 router.get('/', (req, res) => {
-  res.render('index', { title: 'Express', Host:config.get('newpay.host') } );
+  res.render('index', { title: 'Express', Host: `${config.get('newpay.host')}/orders` } );
 });
-// 交易成功：Return （可直接解密，將資料呈現在畫面上）
-router.post('/payment_return', ordersController.postPaymentReturn);
+
+
+// // 交易成功：Return （可直接解密，將資料呈現在畫面上）
+// router.post('/payment_return', ordersController.postPaymentReturn);
 // 確認交易：Notify
-router.post('/payment_notify', ordersController.postPaymentNotify);
-/* (金流測試) */
 
 
 // 12.新增付款資訊(建立交易)(金流)
 router.post('/', isAuth, handleErrorAsync(ordersController.postOrder))
 
-// 13.回應付款結果(金流)
-router.post('/payment_result', isAuth, handleErrorAsync(ordersController.postPaymentResult))
+// // 13.回應付款結果(金流)
+router.post('/payment_notify', ordersController.postPaymentNotify);
 
 // 
 router.post('/postTestData', isAuth, handleErrorAsync(ordersController.postTestOrder))

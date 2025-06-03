@@ -4,20 +4,21 @@ const logger = require('../utils/logger')('TicketsController')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { getOrdersData,getOneOrderData,createTestOrder,createOrder } = require('../services/orderService')
-const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
+const { orderValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
 const orderUtils = require('../utils/orderUtils')
+const { Not } = require('typeorm')
 const ERROR_STATUS_CODE = 400;
 
 
 const postOrder = async (req, res, next) => {
-
-    //尚缺少其他欄位驗證待補
-    if(req.body.tickets.length === 0){
-        throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤')
+    // 驗證資料
+    const result = orderValid.safeParse(req.body);
+    if (!result.success) {
+        console.error("[postOrder]", result.error.format());
+        throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤');
     }
-
     //新增訂單
-    const { eventTitle , orderNo, orderPrice  } = await createOrder(req.body, req.user.id)
+    const { eventTitle , orderNo, orderPrice  } = await createOrder(result.data, req.user.id)
 
     //建立藍新需要資訊
     const TimeStamp = Math.round(new Date().getTime() / 1000);
@@ -29,6 +30,8 @@ const postOrder = async (req, res, next) => {
         Amt: orderPrice,
         ItemDesc: `${eventTitle}票券`,
         Email: req.user.email,
+        TradeLimit : 900,
+        NoticeURL: `${config.get('newpay.host')}/orders/payment_notify`,
     }
     // 加密第一段字串，此段主要是提供交易內容給予藍新金流
     const aesEncrypt = orderUtils.create_mpg_aes_encrypt(order);
@@ -66,20 +69,20 @@ const postPaymentNotify = async (req, res, next) => {
     const thisShaEncrypt = orderUtils.create_mpg_sha_encrypt(response.TradeInfo);
     // 使用 HASH 再次 SHA 加密字串，確保比對一致（確保不正確的請求觸發交易成功）
     if (!thisShaEncrypt === response.TradeSha) {
-    console.log('付款失敗：TradeSha 不一致');
-    return res.end();
+        console.log('付款失敗：TradeSha 不一致');
+        return res.end();
     }
     // 解密交易內容
     const data = orderUtils.create_mpg_aes_decrypt(response.TradeInfo);
     console.log('data:', data);
 
     // 取得交易內容，並查詢本地端資料庫是否有相符的訂單
-    if (!orders[data?.Result?.MerchantOrderNo]) {
-        console.log('找不到訂單');
-        return res.end();
-    }
+    // if (!orders[data?.Result?.MerchantOrderNo]) {
+    //     console.log('找不到訂單');
+    //     return res.end();
+    // }
     // 交易完成，將成功資訊儲存於資料庫
-    console.log('付款完成，訂單：', orders[data?.Result?.MerchantOrderNo]);
+    // console.log('付款完成，訂單：', orders[data?.Result?.MerchantOrderNo]);
 
     return res.end();
 }

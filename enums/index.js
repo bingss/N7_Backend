@@ -7,6 +7,7 @@ const {EVENT_STATUS, EVENT_CHINESE_STATUS} = require('./eventStatus');
 const TICKET_STATUS = require('./ticketStatus');
 const SEAT_STATUS = require('./seatStatus');
 const USER_STATUS = require('./userStatus');
+const PAYMENT_STATUS = require('./paymentStatus');
 
 module.exports = {
     USER_ROLE,
@@ -16,5 +17,6 @@ module.exports = {
     TICKET_STATUS,
     SEAT_STATUS,
     USER_STATUS,
+    PAYMENT_STATUS,
     EVENT_CHINESE_STATUS
   };
