@@ -228,7 +228,7 @@ const getOneOrderData = async ( userId, orderId ) => {
     }
 } 
 
-const updateOrderStatus = async ( orderNo ) => {
+const updateOrderStatus = async ( orderNo, paymentType ) => {
     return dataSource.transaction(async (manager) => {
         const orderRepository = manager.getRepository('Order')
         const seatRepository = manager.getRepository('Seat')
@@ -241,6 +241,7 @@ const updateOrderStatus = async ( orderNo ) => {
         }
         // 更新訂單狀態為已付款
         order.payment_status = PAYMENT_STATUS.PAID;
+        order.payment_method = paymentType || null; // 預設為現金支付
         await orderRepository.save(order);
 
         // 更新座位狀態為已售出
