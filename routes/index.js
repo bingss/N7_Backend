@@ -6,7 +6,6 @@ const { dataSource } = require('../db/data-source')
 const handleErrorAsync = require('../utils/handleErrorAsync')
 const indexController = require('../controllers/index')
 
-
 // 取得所有活動類型
 router.get('/event-types', handleErrorAsync(indexController.getEventTypes))
 

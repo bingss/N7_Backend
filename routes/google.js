@@ -22,7 +22,7 @@ const GoogleStrategy = require( 'passport-google-oauth20' ).Strategy;
 passport.use(new GoogleStrategy({
     clientID: config.get('google').clientID,
     clientSecret: config.get('google').clientSecret,
-    callbackURL: `${ config.get('google').callbackUrl }`,
+    callbackURL: config.get('google').callbackUrl,
     passReqToCallback: true
   },
   createOrBindGoogleAccount
@@ -30,18 +30,12 @@ passport.use(new GoogleStrategy({
 
 //測試用
 // router.get('/', (req, res) => { 
-//   res.render('index', { title: 'Express', Host: `http://localhost:8080/api/v1/google/signin-or-signup` } );
+//   res.render('index', { title: 'Express', Host: `http://localhost:8080/api/v1/google/bind` } );
 // });
 
-router.get('/signin-or-signup' , passport.authenticate('google', {
-  scope: [ 'email', 'profile'],
-  state: 'login'
-}));
+router.get('/signin-or-signup', handleErrorAsync(googleController.signinOrSignup) );
 
-router.get('/bind', isAuth, passport.authenticate('google', {
-  scope: ['email', 'profile'],
-  state: 'bind'
-}));
+router.get('/bind', isAuth, handleErrorAsync(googleController.generateAuthUrl) );
 
 router.get('/callback',  googleController.googleCallback)
 

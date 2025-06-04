@@ -8,7 +8,7 @@ const { isValidPassword } = require('../utils/validUtils');
 const { isValidString } = require('../utils/validUtils');
 const { isValidName } = require('../utils/validUtils');
 const { isUndefined } = require('../utils/validUtils');
-const { USER_ROLE } = require('../enums/index')
+const { USER_ROLE, USER_STATUS } = require('../enums/index')
 const userRepository = dataSource.getRepository('User');
 const accountAuthRepository = dataSource.getRepository('AccountAuth')
 const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -95,6 +95,7 @@ const userController = {
           "user.email AS email",
           "user.name AS name",
           "user.role AS role",
+          "user.status AS status",
           "accountauth.password AS password"
       ])
       .getRawOne();
@@ -106,6 +107,10 @@ const userController = {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ status: false, message: '使用者不存在或密碼輸入錯誤' });
+    }
+
+    if(user.status === USER_STATUS.BLOCKED){
+      return res.status(401).json({ status: false, message: '使用者已被封鎖' });
     }
 
     const token = generateJWT({ userId: user.id });

@@ -6,3 +6,4 @@ const PAYMENT_METHOD = Object.freeze({
   });
   
   module.exports = PAYMENT_METHOD;
+

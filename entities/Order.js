@@ -20,6 +20,13 @@ module.exports = new EntitySchema({
       nullable: true,
       comment: "'credit_card', 'bank_transfer', 'line_pay'..."
     },
+    payment_status: {
+      type: "varchar",
+      length: 10,
+      nullable: false,
+      default:'pending',
+      comment: 'paid、pending、expired...'
+    },
     created_at: {
       type: "timestamp",
       createDate: true,

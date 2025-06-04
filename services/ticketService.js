@@ -2,7 +2,7 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
-const { TICKET_STATUS  } = require('../enums/index')
+const { TICKET_STATUS,PAYMENT_STATUS  } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -29,6 +29,7 @@ const verifyTicket = async (ticketInfo, orgEventId, orgUserId) => {
             .select([
                 "user.name AS user_name",
                 "user.email AS user_email",
+                "order.payment_status AS payment_status",
 
                 "event.id AS event_id",
                 "event.title AS event_title",
@@ -51,9 +52,15 @@ const verifyTicket = async (ticketInfo, orgEventId, orgUserId) => {
             throw appError(403, `使用者權限不足，非屬該活動之舉辦者`)
         }
 
+        if(ticketWithUserEvent.payment_status !== PAYMENT_STATUS.PAID){
+            throw appError(ERROR_STATUS_CODE, `票券尚未付款`)
+        }
+        
         if(ticketWithUserEvent.ticket_status === TICKET_STATUS.USED){
             throw appError(ERROR_STATUS_CODE, `票券已使用`)
         }
+
+
 
         const now = new Date();
         const start = new Date( ticketWithUserEvent.event_start_at );

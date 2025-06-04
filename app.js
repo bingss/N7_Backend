@@ -9,6 +9,8 @@ const ordersRouter = require('./routes/orders')
 const indexRouter = require('./routes/index')
 const eventsRouter = require('./routes/events')
 const googleRouter = require('./routes/google')
+const adminRouter = require('./routes/admin')
+
 
 const app = express()
 
@@ -27,6 +29,9 @@ app.use(pinoHttp({
     }
   }
 }))
+
+
+
 app.use(express.static(path.join(__dirname, 'public')))
 
 app.get('/healthcheck', (req, res) => {
@@ -39,12 +44,12 @@ app.get('/', (req, res) => {
 });
 
 
-
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/organizer', organizerRouter)
 app.use('/api/v1/orders', ordersRouter)
 app.use('/api/v1/events', eventsRouter)
 app.use('/api/v1/google', googleRouter)
+app.use('/api/v1/admin', adminRouter)
 app.use('/api/v1/', indexRouter)
 
 // eslint-disable-next-line no-unused-vars

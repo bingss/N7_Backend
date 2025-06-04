@@ -1,5 +1,11 @@
 const { z } = require('zod');
 const { toDate } = require('./timeUtils')
+const config = require('../config/index')
+const allowedDomains = [
+  'http://localhost',
+  config.get('google').redirectAllowDomain
+];
+
 
 const isValidString = (value) => {
   return typeof value === 'string' && value.trim() !== '';
@@ -49,6 +55,18 @@ const isValidUrl = (value) => {
     return true;
   } catch {
     return false;
+  }
+}
+
+function isRedirectUriAllowed(redirectUri) {
+  try {
+    if(redirectUri === '' || redirectUri === undefined) return true
+    const parsedUrl = new URL(redirectUri);
+    const origin = parsedUrl.origin.startsWith('http://localhost') ? 'http://localhost' : parsedUrl.origin;
+    return allowedDomains.includes(origin);
+
+  } catch (err) {
+    return false; // 無法解析 URL 就直接拒絕
   }
 }
 
@@ -136,6 +154,18 @@ const proposeEventValid  = z.object({
     message: '分區名稱重複',
   });
 
+// 單一票券項目 schema
+const ticketSchema = z.object({
+  section_id: z.string().uuid(), // 驗證 UUID 格式
+  quantity: z.number().int().positive() // 整數且 > 0
+});
+
+// 整個訂單資料 schema
+const orderValid = z.object({
+  event_id: z.string().uuid(), // 驗證 UUID 格式
+  tickets: z.array(ticketSchema).min(1) // 至少要有一張票
+});
+
 
 module.exports = {
   isValidString,
@@ -147,7 +177,9 @@ module.exports = {
   isValidName,
   isNotValidUuid,
   proposeEventValid,
-  isValidUrl
+  isValidUrl,
+  isRedirectUriAllowed,
+  orderValid
 }
 
 

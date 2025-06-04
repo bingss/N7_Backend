@@ -8,7 +8,8 @@ const PERMISSION_DENIED_STATUS_CODE = 401
 const FailedMessageMap = {
   expired: 'Token 已過期',
   invalid: '無效的 token',
-  missing: '尚未登入'
+  missing: '尚未登入',
+  blocked: '使用者已被封鎖'
 }
 
 
@@ -60,6 +61,10 @@ module.exports = ({
       const user = await userRepository.findOneBy({ id: verifyResult.userId })
       if (!user) {
         next(appError(PERMISSION_DENIED_STATUS_CODE, FailedMessageMap.invalid))
+        return
+      }
+      if(user.status === 'blocked'){
+        next(appError(PERMISSION_DENIED_STATUS_CODE, FailedMessageMap.blocked))
         return
       }
       req.user = user
