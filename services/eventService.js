@@ -138,7 +138,7 @@ const updateEvent = async (newEventData, eventId, userId) => {
         originalEventData.end_at = formatDatabaseDate(originalEventData.end_at)
         originalEventData.sale_start_at = formatDatabaseDate(originalEventData.sale_start_at)
         originalEventData.sale_end_at = formatDatabaseDate(originalEventData.sale_end_at)
-        
+
         const changedData = await compareChangedData(originalEventData, newEventData, eventId)
 
         let updatedEventResult = 0
@@ -559,25 +559,25 @@ const getAllEventsData = async () => {
 // 含座位
 const getEventById = async (eventId) => {
     try {
-//         const ticket = await dataSource.getRepository('Ticket')
-//             .createQueryBuilder('ticket')
-//             .leftJoinAndSelect('ticket.Seat', 'Seat') // ✅
-//             .getOne();
+        //         const ticket = await dataSource.getRepository('Ticket')
+        //             .createQueryBuilder('ticket')
+        //             .leftJoinAndSelect('ticket.Seat', 'Seat') // ✅
+        //             .getOne();
 
-//         console.log(ticket);
+        //         console.log(ticket);
 
-//         const seat = await dataSource.getRepository('Seat')
-//             .createQueryBuilder('Seat')
-//             .leftJoinAndSelect('Seat.Ticket', 'Ticket') // ✅
-//             .getOne();
+        //         const seat = await dataSource.getRepository('Seat')
+        //             .createQueryBuilder('Seat')
+        //             .leftJoinAndSelect('Seat.Ticket', 'Ticket') // ✅
+        //             .getOne();
 
-//         console.log(seat);
+        //         console.log(seat);
 
         const event = await dataSource.getRepository('Event')
             .createQueryBuilder('event')
             .leftJoinAndSelect('event.Type', 'type')
             .leftJoinAndSelect('event.Section', 'section')
-            .leftJoinAndSelect('section.Seat', 'seat')
+            // .leftJoinAndSelect('section.Seat', 'seat')
             // .leftJoinAndSelect('seat.Ticket', 'ticket')
             .where('event.id = :id', { id: eventId })
             .andWhere('event.status = :status', { status: 'approved' })
@@ -630,17 +630,17 @@ const getAdminEvents = async () => {
 
         const formatEvents = {
             events: adminEvents.length === 0 ? [] : adminEvents.map(event => (
-            {
-                id: event.id,
-                title: event.title,
-                cover_image_url: event.cover_image_url,
-                location: event.location,
-                start_at: formatDatabaseDate(event.start_at),
-                end_at: formatDatabaseDate(event.end_at),
-                sale_status: getSaleStatus(event),
-                sale_rate: parseInt(event.ticket_purchaced, 10) / parseInt(event.ticket_total, 10)
-            }))
-        };    
+                {
+                    id: event.id,
+                    title: event.title,
+                    cover_image_url: event.cover_image_url,
+                    location: event.location,
+                    start_at: formatDatabaseDate(event.start_at),
+                    end_at: formatDatabaseDate(event.end_at),
+                    sale_status: getSaleStatus(event),
+                    sale_rate: parseInt(event.ticket_purchaced, 10) / parseInt(event.ticket_total, 10)
+                }))
+        };
 
         return formatEvents
     } catch (error) {
@@ -741,23 +741,23 @@ const updateEventStatus = async (eventId, isApproved) => {
         if (!nowEvent) {
             throw appError(ERROR_STATUS_CODE, '活動不存在')
         }
-        
+
         let newStatus;
         let check_at = null;
 
-        if(isApproved){
+        if (isApproved) {
             if (nowEvent.status === EVENT_STATUS.APPROVED) {
                 throw appError(ERROR_STATUS_CODE, '活動已審核通過')
             }
             newStatus = EVENT_STATUS.APPROVED
             check_at = new Date();
-        }else{
+        } else {
             newStatus = EVENT_STATUS.REJECTED
         }
 
         const updatedEvent = await eventRepository.update(
             { id: eventId },
-            { status: newStatus,check_at: check_at  }
+            { status: newStatus, check_at: check_at }
         );
 
         if (updatedEvent.affected === 0) {
