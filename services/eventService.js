@@ -290,7 +290,7 @@ const getOrgEventsData = async (orgUserId) => {
                 ticket_purchaced: parseInt(event.ticket_purchaced, 10)
             }
             const now = new Date();
-            const nowGmt8 = new Date( now.getTime() + 8 * 60 * 60 * 1000 );
+            const nowGmt8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
             const end = new Date(noStatusOrders.end_at);
 
             // 判斷狀態分類
@@ -518,6 +518,92 @@ const getAllEventsData = async () => {
     }
 }
 
+// 不含座位
+// const getEventById = async (eventId) => {
+//     try {
+//         const queryBuilder = dataSource.getRepository('Event')
+//             .createQueryBuilder('event')
+//             .innerJoin('event.Type', 'type')
+//             .select([
+//                 'event.id AS id',
+//                 'event.title AS title',
+//                 'event.cover_image_url AS cover_image_url',
+//                 'event.description AS description',
+//                 'DATE(event.start_at) AS start_at',
+//                 'type.name AS type',
+//                 'event.city AS city'
+//             ])
+//             .where('event.id = :id', { id: eventId })
+//             .andWhere('event.status = :status', { status: 'approved' })
+//         // .getRawOne();
+//         console.log('🧪 SQL:', queryBuilder.getSql());
+//         console.log('🧪 Params:', queryBuilder.getParameters());
+
+//         const event = await queryBuilder.getRawOne();
+
+//         if (!event) {
+//             throw appError(404, '找不到該活動',);
+//         }
+
+//         return event;
+//     } catch (error) {
+//         // 如果是自訂錯誤，直接拋出；否則包裝成 appError 拋出
+//         if (error.status) {
+//             throw error;
+//         }
+//         console.error('🔥 getEventId error:', error);
+//         throw appError(400, '發生錯誤');
+//     }
+// }
+
+// 含座位
+const getEventById = async (eventId) => {
+    try {
+//         const ticket = await dataSource.getRepository('Ticket')
+//             .createQueryBuilder('ticket')
+//             .leftJoinAndSelect('ticket.Seat', 'Seat') // ✅
+//             .getOne();
+
+//         console.log(ticket);
+
+//         const seat = await dataSource.getRepository('Seat')
+//             .createQueryBuilder('Seat')
+//             .leftJoinAndSelect('Seat.Ticket', 'Ticket') // ✅
+//             .getOne();
+
+//         console.log(seat);
+
+        const event = await dataSource.getRepository('Event')
+            .createQueryBuilder('event')
+            .leftJoinAndSelect('event.Type', 'type')
+            .leftJoinAndSelect('event.Section', 'section')
+            .leftJoinAndSelect('section.Seat', 'seat')
+            // .leftJoinAndSelect('seat.Ticket', 'ticket')
+            .where('event.id = :id', { id: eventId })
+            .andWhere('event.status = :status', { status: 'approved' })
+            .getOne(); // ⚠️ 回傳巢狀物件而非 raw flat 結果
+
+        // console.log('🧪 SQL:', queryBuilder.getSql());
+        // console.log('🧪 Params:', queryBuilder.getParameters());
+
+        if (!event) {
+            throw appError(404, '找不到該活動');
+        }
+
+        // ✅ 增加瀏覽次數
+        await dataSource.getRepository('Event')
+            .increment({ id: eventId }, 'view_count', 1);
+
+        return event;
+    } catch (error) {
+        if (error.status) {
+            throw error;
+        }
+        console.error('🔥 getEventById error:', error);
+        throw appError(400, '發生錯誤');
+    }
+};
+
 const getAdminEvents = async () => {
     try {
         const eventRepository = dataSource.getRepository('Event')
@@ -704,6 +790,7 @@ module.exports = {
     getComingEventsData,
     getTrendEventsData,
     getAllEventsData,
+    getEventById,
     getAdminEvents,
     getCheckingEvent,
     updateEventStatus
