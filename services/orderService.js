@@ -120,6 +120,7 @@ const getOrdersData = async ( userId ) => {
             .leftJoin("order.Event", "event")
             .leftJoin("order.Ticket", "ticket")
             .where("order.user_id = :userId", { userId: userId })
+            .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
             .select([
                 "order.id AS order_id",
                 "event.title AS title",
@@ -184,6 +185,8 @@ const getOneOrderData = async ( userId, orderId ) => {
             .getRawMany();
             
         if (rawTicket.length === 0) throw appError(ERROR_STATUS_CODE, '訂單不存在');
+        if (rawTicket[0].payment_status === PAYMENT_STATUS.PENDING) throw appError(ERROR_STATUS_CODE, '訂單尚未付款');
+        if (rawTicket[0].payment_status === PAYMENT_STATUS.EXPIRED) throw appError(ERROR_STATUS_CODE, '訂單已過期');
 
         const base = rawTicket[0];
         const formatTicket = {
