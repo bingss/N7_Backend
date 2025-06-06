@@ -559,25 +559,12 @@ const getAllEventsData = async () => {
 // 含座位
 const getEventById = async (eventId) => {
     try {
-        //         const ticket = await dataSource.getRepository('Ticket')
-        //             .createQueryBuilder('ticket')
-        //             .leftJoinAndSelect('ticket.Seat', 'Seat') // ✅
-        //             .getOne();
-
-        //         console.log(ticket);
-
-        //         const seat = await dataSource.getRepository('Seat')
-        //             .createQueryBuilder('Seat')
-        //             .leftJoinAndSelect('Seat.Ticket', 'Ticket') // ✅
-        //             .getOne();
-
-        //         console.log(seat);
 
         const event = await dataSource.getRepository('Event')
             .createQueryBuilder('event')
             .leftJoinAndSelect('event.Type', 'type')
             .leftJoinAndSelect('event.Section', 'section')
-            // .leftJoinAndSelect('section.Seat', 'seat')
+            .leftJoinAndSelect('section.Seat', 'seat')
             // .leftJoinAndSelect('seat.Ticket', 'ticket')
             .where('event.id = :id', { id: eventId })
             .andWhere('event.status = :status', { status: 'approved' })
@@ -590,7 +577,21 @@ const getEventById = async (eventId) => {
             throw appError(404, '找不到該活動');
         }
 
-        // ✅ 增加瀏覽次數
+        // // 計算每個區域的剩餘座位 (status 為 'available')
+        // event.Section.forEach(section => {
+        //     section.remainingSeats = section.Seat.filter(seat => seat.status === 'available').length;
+        // });
+
+        event.Section.forEach(section => {
+            // 只保留剩餘座位數，不返回 seat 的資料
+
+            section.remainingSeats = section.Seat ? section.Seat.filter(seat => seat.status === 'available').length : 0;
+            delete section.Seat;
+        });
+
+        // console.log(event.Section)
+
+        // 增加瀏覽次數
         await dataSource.getRepository('Event')
             .increment({ id: eventId }, 'view_count', 1);
 
@@ -599,7 +600,7 @@ const getEventById = async (eventId) => {
         if (error.status) {
             throw error;
         }
-        console.error('🔥 getEventById error:', error);
+        console.error('getEventById error:', error);
         throw appError(400, '發生錯誤');
     }
 };
