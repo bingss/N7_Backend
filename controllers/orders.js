@@ -129,29 +129,6 @@ const postPaymentReturn = async (req, res, next) => {
     }
 }
 
-// //新增暫時訂單，供做測試使用
-// const postTestOrder = async (req, res, next) => {
-//     // //尚缺少欄位驗證
-//     // const result = proposeEventValid.safeParse(req.body);
-//     // if (!result.success) {
-//     //   const errorMessages = result.error.issues.map(issue => issue.message);
-//     //   logger.error(`[postEvent]欄位錯誤：${errorMessages}`);
-//     //   next( appError(ERROR_STATUS_CODE, errorMessages ) );
-//     //   return;
-//     // }
-
-//     //新增訂單
-//     const savedTickets = await createTestOrder(req.body, req.user.id)
-
-//     res.status(201).json({
-//         status: true,
-//         message: "新增成功",
-//         data: {
-//             savedTickets
-//         }
-//     })
-// }
-
 const getOrders = async (req, res, next) => {
     const orgUserId = req.user.id
     const orders = await getOrdersData(orgUserId)
@@ -187,3 +164,27 @@ module.exports = {
     postPaymentNotify,
     postPaymentReturn
 }
+
+
+// //新增暫時訂單，供做測試使用
+// const postTestOrder = async (req, res, next) => {
+//     // //尚缺少欄位驗證
+//     // const result = proposeEventValid.safeParse(req.body);
+//     // if (!result.success) {
+//     //   const errorMessages = result.error.issues.map(issue => issue.message);
+//     //   logger.error(`[postEvent]欄位錯誤：${errorMessages}`);
+//     //   next( appError(ERROR_STATUS_CODE, errorMessages ) );
+//     //   return;
+//     // }
+
+//     //新增訂單
+//     const savedTickets = await createTestOrder(req.body, req.user.id)
+
+//     res.status(201).json({
+//         status: true,
+//         message: "新增成功",
+//         data: {
+//             savedTickets
+//         }
+//     })
+// }

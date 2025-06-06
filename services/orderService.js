@@ -4,6 +4,7 @@ const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { generateTicketQrcode } = require('../utils/qrcodeUtils')
 const { PAYMENT_METHOD,EVENT_STATUS,SEAT_STATUS,PAYMENT_STATUS  } = require('../enums/index')
+const cron = require('node-cron');
 const ERROR_STATUS_CODE = 400;
 
 const createOrder = async (orderData, userId) => {
@@ -110,7 +111,6 @@ const createOrder = async (orderData, userId) => {
         return { eventTitle , orderNo, orderPrice  };
     });
 }
-
 
 const getOrdersData = async ( userId ) => {
     try {
@@ -255,11 +255,50 @@ const updateOrderStatus = async ( orderNo, paymentType ) => {
     })
 }
 
+const cleanExpiredOrderJob = () => {
+  cron.schedule('0,32 * * * *', async () => {
+        logger.info('[CRON] 開始清理過期訂單');
+        const orderRepository = dataSource.getRepository('Order')
+        const seatRepository = dataSource.getRepository('Seat')
+        const ticketRepository = dataSource.getRepository('Ticket')
+        // 找到過期未付款的訂單
+        const expiredOrders = await orderRepository
+            .createQueryBuilder('order')
+            .leftJoinAndSelect('order.Ticket', 'ticket')
+            .leftJoinAndSelect('ticket.Seat', 'seat')
+            .where('order.payment_status = :status', { status: PAYMENT_STATUS.PENDING })
+            .andWhere("order.created_at + interval '16 minutes' < now()")
+            .getMany();
+
+
+        // 將座位釋放
+        for (const order of expiredOrders) {
+            for (const ticket of order.Ticket) {
+                if (ticket.Seat) {
+                    ticket.Seat.status = SEAT_STATUS.AVAILABLE;
+                    await seatRepository.save(ticket.Seat);
+                }
+            }
+
+            // 刪除過期訂單Ticket
+            await ticketRepository.remove(order.Ticket);
+            // 將訂單標記為 expired
+            order.payment_status = PAYMENT_STATUS.EXPIRED;
+            await orderRepository.save(order);
+        }
+
+        if (expiredOrders.length > 0) {
+            logger.info(`[CRON] 清理 ${expiredOrders.length} 筆過期訂單`);
+        }
+    });
+}
+
 module.exports = {
     getOrdersData,
     getOneOrderData,
     createOrder,
     updateOrderStatus,
+    cleanExpiredOrderJob
 }
 
 
