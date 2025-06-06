@@ -8,7 +8,7 @@ const config = require('../config/index');
 const app = require('../app'); // 導入 app.js
 const logger = require('../utils/logger')('www');
 const { dataSource } = require('../db/data-source');
-
+const { cleanExpiredOrderJob } = require('../services/orderService');
 const port = config.get('web.port');
 
 app.set('port', port);
@@ -42,6 +42,8 @@ server.on('error', onError);
 server.listen(port, async () => {
   try {
     await dataSource.initialize();
+    cleanExpiredOrderJob(); // 啟動清理過期訂單的定時任務
+    logger.info('啟動清理過期訂單的定時任務');
     logger.info('資料庫連線成功');
     logger.info(`伺服器運作中. port: ${port}`);
   } catch (error) {
