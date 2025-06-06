@@ -98,8 +98,7 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
                     console.log(googleUser)
                     if(googleUser.status === USER_STATUS.BLOCKED){
                         console.log(googleUser)
-                        throw new error('使用者已被封鎖，無法登入');
-                        
+                        return cb( null, false, { googleErrorRedirect: `${redirectURL}?error=blocked` } );
                     }
                     return cb(null, googleUser, cbStateData);
                 }

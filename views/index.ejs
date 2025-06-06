@@ -11,11 +11,7 @@
       <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
         <input type="text" name="MerchantID" :value=order.MerchantID />
         <input type="text" name="TradeSha" :value="order.TradeSha" />
-        <input
-          type="text"
-          name="TradeInfo"
-          :value="order.TradeInfo"
-        />
+        <input  type="text" name="TradeInfo" :value="order.TradeInfo"/>
         <input type="text" name="Version" :value=order.Version />
         <!-- <input type="text" name="TimeStamp" :value="order.TimeStamp" /> -->
         
