@@ -2,7 +2,7 @@
 const config = require('../config/index')
 const logger = require('../utils/logger')('Organizer')
 const appError = require('../utils/appError')
-const { getComingEventsData, getTrendEventsData, getAllEventsData } = require('../services/eventService')
+const { getComingEventsData, getTrendEventsData, getAllEventsData, getEventById } = require('../services/eventService')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -38,8 +38,19 @@ const getTrendEvents = async (req, res, next) => {
     })
 }
 
+const getEventId = async (req, res, next) => {
+    const { event_id } = req.params;
+    const event = await getEventById(event_id);
+    res.status(200).json({
+        status: true,
+        message: `取得資料成功`,
+        data: event
+    })
+}
+
 module.exports = {
     getAllEvents,
     getComingEvents,
-    getTrendEvents
+    getTrendEvents,
+    getEventId
 }
