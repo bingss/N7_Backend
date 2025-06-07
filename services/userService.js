@@ -180,7 +180,7 @@ const getUsersData = async () => {
                     "user.email AS email",
                     // "user.role AS role",
                     "COUNT(ticket.id) AS count",
-                    "(CASE WHEN user.status = 'active' THEN false ELSE true END) AS isBlocked"
+                    "(CASE WHEN user.status = 'active' THEN false ELSE true END) AS isblocked"
                 ])
                 .groupBy("user.id")
                 .addGroupBy("user.serialNo")
@@ -194,7 +194,7 @@ const getUsersData = async () => {
                 email: user.email,
                 // role: user.role,
                 count: parseInt(user.count, 10),
-                isBlocked: user.isBlocked === 'true' ? true : false
+                isBlocked: user.isblocked
             }))
         return formatUsers
     }catch (err) {
