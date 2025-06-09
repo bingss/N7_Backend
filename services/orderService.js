@@ -81,29 +81,31 @@ const createOrder = async (orderData, userId) => {
                 throw appError(ERROR_STATUS_CODE, `${sectionData.section}區，不足${count}個座位`)
             }
             seatAssignments.set(sectionId, { seats: availableSeats, price: sectionData.price_default});
+            console.log(`Section ${sectionData.section} 區，已取得 ${availableSeats.length} 個可用座位，每張票價為 ${sectionData.price_default} 元`);
         }
         // 4. 配對 ticket 對應的 seat
         const updatedSeats = [];
         const newTickets = [];
         let orderPrice = 0;
-
+        
         for (const ticket of orderTickets) {
 
             const assignment = seatAssignments.get(ticket.section_id);
-            const seat = assignment.seats.shift(); // 拿一個可用 seat
             const price = assignment.price;
+            for (let i = 0; i < ticket.quantity; i++) {
+                const seat = assignment.seats.shift(); // 拿一個可用 seat
+                seat.status = SEAT_STATUS.RESERVED;
+                updatedSeats.push(seat);
 
-            seat.status = SEAT_STATUS.RESERVED;
-            updatedSeats.push(seat);
-
-            const newTicket = ticketRepository.create({
-                price_paid: price,
-                type: '全票',
-                seat_id: seat.id,
-                order_id: savedOrder.id,
-            });
-            newTickets.push(newTicket);
-            orderPrice += price
+                const newTicket = ticketRepository.create({
+                    price_paid: price,
+                    type: '全票',
+                    seat_id: seat.id,
+                    order_id: savedOrder.id,
+                });
+                newTickets.push(newTicket);
+                orderPrice += price;
+            }
         }
         await seatRepository.save(updatedSeats);
         await ticketRepository.save(newTickets);
