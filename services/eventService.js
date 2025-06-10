@@ -5,7 +5,7 @@ const { dataSource } = require('../db/data-source')
 const { moveFinalImage } = require('../utils/imageUtils')
 const { formatDatabaseDate } = require('../utils/timeUtils')
 const { compareChangedData, generateSectionAndSeat } = require('./utils/eventUtils')
-const { EVENT_STATUS } = require('../enums/index')
+const { EVENT_STATUS, PAYMENT_STATUS } = require('../enums/index')
 
 const ERROR_STATUS_CODE = 400;
 
@@ -518,44 +518,6 @@ const getAllEventsData = async () => {
     }
 }
 
-// 不含座位
-// const getEventById = async (eventId) => {
-//     try {
-//         const queryBuilder = dataSource.getRepository('Event')
-//             .createQueryBuilder('event')
-//             .innerJoin('event.Type', 'type')
-//             .select([
-//                 'event.id AS id',
-//                 'event.title AS title',
-//                 'event.cover_image_url AS cover_image_url',
-//                 'event.description AS description',
-//                 'DATE(event.start_at) AS start_at',
-//                 'type.name AS type',
-//                 'event.city AS city'
-//             ])
-//             .where('event.id = :id', { id: eventId })
-//             .andWhere('event.status = :status', { status: 'approved' })
-//         // .getRawOne();
-//         console.log('🧪 SQL:', queryBuilder.getSql());
-//         console.log('🧪 Params:', queryBuilder.getParameters());
-
-//         const event = await queryBuilder.getRawOne();
-
-//         if (!event) {
-//             throw appError(404, '找不到該活動',);
-//         }
-
-//         return event;
-//     } catch (error) {
-//         // 如果是自訂錯誤，直接拋出；否則包裝成 appError 拋出
-//         if (error.status) {
-//             throw error;
-//         }
-//         console.error('🔥 getEventId error:', error);
-//         throw appError(400, '發生錯誤');
-//     }
-// }
-
 // 含座位
 const getEventById = async (eventId) => {
     try {
@@ -780,6 +742,34 @@ const updateEventStatus = async (eventId, isApproved) => {
     }
 }
 
+const deleteEventData = async (orgUserId, eventId) => {
+    const eventRepository = dataSource.getRepository('Event')
+    const deleteEvent = await eventRepository
+            .createQueryBuilder("event")
+            .leftJoinAndSelect("event.Order", "order")
+            .where("event.id = :eventId", { eventId })
+            .andWhere("event.user_id = :orgUserId", { orgUserId: orgUserId })
+            .getOne();
+
+    if ( !deleteEvent ) {
+        throw appError(ERROR_STATUS_CODE, '活動不存在或無權限刪除')
+    }
+    if (deleteEvent.status === EVENT_STATUS.APPROVED) {
+        throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得刪除')
+    }
+    if( deleteEvent.Order) {
+        console.log(deleteEvent.Order)
+        if( deleteEvent.Order.some(order => order.payment_status !== PAYMENT_STATUS.EXPIRED) ) {
+            throw appError(ERROR_STATUS_CODE, '活動有未過期訂單存在，無法刪除')
+        }
+    }
+    const deleteResult = await eventRepository.remove( deleteEvent );
+    if (deleteResult === 0) {
+        throw appError(ERROR_STATUS_CODE, '刪除活動失敗')
+    }
+    return
+}
+
 
 module.exports = {
     createNewEvent,
@@ -794,7 +784,8 @@ module.exports = {
     getEventById,
     getAdminEvents,
     getCheckingEvent,
-    updateEventStatus
+    updateEventStatus,
+    deleteEventData
 }
 
 

@@ -276,6 +276,10 @@ const cleanExpiredOrderJob = () => {
             .getMany();
 
 
+        if (expiredOrders.length === 0) {
+            logger.info('[CRON] 沒有過期訂單需要清理');
+            return;
+        }
         // 將座位釋放
         for (const order of expiredOrders) {
             for (const ticket of order.Ticket) {
@@ -284,14 +288,13 @@ const cleanExpiredOrderJob = () => {
                     await seatRepository.save(ticket.Seat);
                 }
             }
-
             // 刪除過期訂單Ticket
             await ticketRepository.remove(order.Ticket);
             // 將訂單標記為 expired
             order.payment_status = PAYMENT_STATUS.EXPIRED;
-            await orderRepository.save(order);
+            
         }
-
+        await orderRepository.save(expiredOrders);
         if (expiredOrders.length > 0) {
             logger.info(`[CRON] 清理 ${expiredOrders.length} 筆過期訂單`);
         }

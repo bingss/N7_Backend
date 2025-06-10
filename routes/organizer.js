@@ -46,7 +46,8 @@ router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerContro
 // 24.更新票券使用狀態(驗票)
 router.patch('/events/:orgEventId/verify',isAuth, authRole, handleErrorAsync(organizerController.patchTicket));
 
-
+// 24.更新票券使用狀態(驗票)
+router.delete('/events/:eventId',isAuth, authRole, handleErrorAsync(organizerController.deleteEvent));
 
 
 

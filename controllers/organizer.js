@@ -4,7 +4,7 @@ const logger = require('../utils/logger')('Organizer')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { verifyTicket } = require('../services/ticketService')
-const { createNewEvent,updateEvent,getEditEventData,getOrgEventsData,getOneOrgEventData, getStausOrgEventsData } = require('../services/eventService')
+const eventService = require('../services/eventService')
 const { uploadImage } = require('../utils/imageUtils')
 const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
 const { decodeTicketQrcode } = require('../utils/qrcodeUtils')
@@ -33,7 +33,7 @@ const postEvent = async (req, res, next) => {
     //新增活動
     const {savedEvent,
         newCoverImgUrl,
-        newSectionImgUrl} = await createNewEvent(result.data, req.user.id)
+        newSectionImgUrl} = await eventService.createNewEvent(result.data, req.user.id)
 
     res.status(201).json({
         status: true,
@@ -73,7 +73,7 @@ const putEvent = async (req, res, next) => {
     result.data.city = city
 
     //編輯活動
-    const {savedEvent} = await updateEvent(result.data, eventId, req.user.id)
+    const {savedEvent} = await eventService.updateEvent(result.data, eventId, req.user.id)
 
     res.status(201).json({
         status: true,
@@ -92,7 +92,7 @@ const putEvent = async (req, res, next) => {
 
 const getEvents = async (req, res, next) => {
     const orgUserId = req.user.id
-    const events = await getOrgEventsData(orgUserId)
+    const events = await eventService.getOrgEventsData(orgUserId)
 
     res.status(200).json({
         status: true,
@@ -108,11 +108,11 @@ const getEvent = async (req, res, next) => {
         return
     }
     const orgUserId = req.user.id
-    const event = await getOneOrgEventData(orgUserId, eventId)
+    const event = await eventService.getOneOrgEventData(orgUserId, eventId)
 
     res.status(200).json({
         status: true,
-        message: "取得活動列表成功",
+        message: "取得活動資訊成功",
         data: event
     })
 }
@@ -124,7 +124,7 @@ const getEditEvent = async (req, res, next) => {
         return
     }
     const orgUserId = req.user.id
-    const event = await getEditEventData(orgUserId, eventId)
+    const event = await eventService.getEditEventData(orgUserId, eventId)
 
     res.status(200).json({
         status: true,
@@ -180,12 +180,27 @@ const getStatusEvents = async (req, res, next) => {
         return
     }
 
-    const events = await getStausOrgEventsData(orgUserId, queryStatus)
+    const events = await eventService.getStausOrgEventsData(orgUserId, queryStatus)
 
     res.status(200).json({
         status: true,
         message: `取得${EVENT_CHINESE_STATUS[ queryStatus ]}活動成功`,
         data: events
+    })
+}
+
+const deleteEvent = async (req, res, next) => {
+    const { eventId } = req.params
+    if (isUndefined(eventId) || isNotValidString(eventId) || isNotValidUuid(eventId)) {
+        next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
+        return
+    }
+    const orgUserId = req.user.id
+    await eventService.deleteEventData(orgUserId, eventId)
+
+    res.status(200).json({
+        status: true,
+        message: "活動刪除成功",
     })
 }
 
@@ -197,5 +212,6 @@ module.exports = {
     getEditEvent,
     postImage,
     patchTicket,
-    getStatusEvents
+    getStatusEvents,
+    deleteEvent
 }

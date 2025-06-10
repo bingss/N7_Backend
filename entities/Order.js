@@ -65,7 +65,8 @@ module.exports = new EntitySchema({
           name: "event_id",
           referencedColumnName: 'id',
           foreignKeyConstraintName: 'order_event_id_fk'
-        }
+        },
+        onDelete: "CASCADE"
     },
     Ticket: {
       type: "one-to-many",
