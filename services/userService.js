@@ -220,7 +220,7 @@ const getOneUserData = async (userId) => {
                     "user.name AS user_name",
                     "user.email AS user_email",
                     "user.role AS user_role",
-                    "(CASE WHEN user.status = 'active' THEN false ELSE true END) AS isBlocked",
+                    "(CASE WHEN user.status = 'active' THEN false ELSE true END) AS isblocked",
 
                     "order.id AS order_id",
                     "event.title AS event_title",
@@ -244,7 +244,7 @@ const getOneUserData = async (userId) => {
                     name: base.user_name,
                     email: base.user_email,
                     role: base.user_role,
-                    isBlocked: base.isBlocked,
+                    isBlocked: base.isblocked,
                 },
                 orders: base.order_id === null ? [] : userWithInfos.map(order => ({
                             order_id: order.order_id,
