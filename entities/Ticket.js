@@ -58,7 +58,7 @@ module.exports = new EntitySchema({
         foreignKeyConstraintName: 'ticket_seat_id_fk'
       },
       inverseSide: "Ticket",
-      onDelete: "RESTRICT"
+      onDelete: "CASCADE"
     },
     Order: {
       type: "many-to-one",
@@ -69,7 +69,7 @@ module.exports = new EntitySchema({
         referencedColumnName: 'id',
         foreignKeyConstraintName: 'ticket_order_id_fk'
       },
-      onDelete: "RESTRICT"
+      onDelete: "CASCADE"
     }
   }
 });
