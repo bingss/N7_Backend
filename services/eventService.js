@@ -686,7 +686,7 @@ const getCheckingEvent = async (eventId) => {
             cover_image_url: eventWithSections[0].cover_image_url,
             section_image_url: eventWithSections[0].section_image_url,
             status: eventWithSections[0].status,
-            sale_rate: `${( totalSold / totalSeats *100).toFixed(2)}%`,
+            sale_rate: totalSold / totalSeats,
             sections: eventWithSections.map(row => ({
                 section_name: row.section_name,
                 price: row.price,
