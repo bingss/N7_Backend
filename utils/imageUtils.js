@@ -32,6 +32,10 @@ const checkImage = async (req, res, next) => {
     let files;
     try {
         [fields, files] = await form.parse(req)
+        if (!files?.image || !Array.isArray(files.image) || !files.image[0]?.filepath) {
+            logger.warn('[checkImageFile] 上傳欄位填寫錯誤')
+            return next(appError(ERROR_STATUS_CODE, '欄位填寫錯誤'));
+        }
     }catch (error) {
         if(error.code === formidableErrors.biggerThanMaxFileSize) {
             logger.warn('[checkImageFile] 檔案大小超過限制5mb')
