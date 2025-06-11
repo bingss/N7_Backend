@@ -646,7 +646,10 @@ const getCheckingEvent = async (eventId) => {
 
                 'section.section AS section_name',
                 'section.price_default AS price',
-                'COUNT(seat.id) AS quantity'
+                'COUNT(seat.id) AS quantity',
+                'SUM(CASE WHEN seat.status = \'sold\' THEN 1 ELSE 0 END) AS sold_seats',
+                'SUM(CASE WHEN seat.status = \'reserved\' THEN 1 ELSE 0 END) AS reserved_seats',
+                'SUM(CASE WHEN seat.status = \'available\' THEN 1 ELSE 0 END) AS available_seats'
             ])
             .groupBy('event.id, user.id, section.id, type.id')
             .getRawMany();
@@ -658,6 +661,13 @@ const getCheckingEvent = async (eventId) => {
         // if (eventWithSections[0].status !== EVENT_STATUS.CHECKING) {
         //     throw appError(ERROR_STATUS_CODE, '非屬審核中活動狀態')
         // }
+
+        let totalSeats = 0;
+        let totalSold = 0;
+        eventWithSections.forEach(row => {
+            totalSeats += parseInt(row.quantity);
+            totalSold += parseInt(row.sold_seats);
+        })
 
         const eventInfo = {
             organizer_id: eventWithSections[0].organizer_id,
@@ -676,10 +686,14 @@ const getCheckingEvent = async (eventId) => {
             cover_image_url: eventWithSections[0].cover_image_url,
             section_image_url: eventWithSections[0].section_image_url,
             status: eventWithSections[0].status,
+            sale_rate: `${( totalSold / totalSeats *100).toFixed(2)}%`,
             sections: eventWithSections.map(row => ({
                 section_name: row.section_name,
                 price: row.price,
-                quantity: parseInt(row.quantity, 10)
+                quantity: parseInt(row.quantity, 10),
+                sold_seats: parseInt(row.sold_seats, 10),
+                reserved_seats: parseInt(row.reserved_seats, 10),
+                available_seats: parseInt(row.available_seats, 10)
             }))
         };
 
