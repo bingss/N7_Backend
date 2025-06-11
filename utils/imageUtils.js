@@ -44,6 +44,13 @@ const checkImage = async (req, res, next) => {
         console.log(`[checkImageFile] ${error.message}`)
         next( appError(ERROR_STATUS_CODE, '欄位填寫錯誤') )
     }
+    
+    const reqImgType = fields.type?.[0] ? IMAGE_TYPES[ fields.type[0].toUpperCase() ] : null
+    if( !reqImgType  ) {
+        logger.warn('[checkImageFile] 上傳欄位填寫錯誤')
+        next( appError(ERROR_STATUS_CODE, '欄位填寫錯誤') )
+        return;
+    }
 
     const imgBuffer = fs.readFileSync(files.image[0].filepath);
     const dimensions = imageSize(imgBuffer);
@@ -53,12 +60,7 @@ const checkImage = async (req, res, next) => {
         next( appError(ERROR_STATUS_CODE, '僅限上傳橫式圖片') )
     }
  
-    const reqImgType = fields.type?.[0] ? IMAGE_TYPES[ fields.type[0].toUpperCase() ] : null
-    if( !files.image || !reqImgType  ) {
-        logger.warn('[checkImageFile] 上傳欄位填寫錯誤')
-        next( appError(ERROR_STATUS_CODE, '欄位填寫錯誤') )
-        return;
-    }
+
 
     req.imgType = reqImgType
     req.imgFile = files.image[0]
