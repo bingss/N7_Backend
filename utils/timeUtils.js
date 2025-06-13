@@ -18,10 +18,16 @@ function toDate (val) {
     return new Date(val.replace(' ', 'T'));
 }
 
+function getNowGMT8Time() {
+    // 將日期轉換為GMT+8時區的日期
+    const now = new Date();
+    return new Date(now.getTime() + 8 * 60 * 60 * 1000);
+}
 
 
 module.exports = { 
     formatDatabaseDate,
-    toDate
+    toDate,
+    getNowGMT8Time
   };
   

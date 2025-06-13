@@ -6,7 +6,7 @@ const { moveFinalImage } = require('../utils/imageUtils')
 const { formatDatabaseDate } = require('../utils/timeUtils')
 const { compareChangedData, generateSectionAndSeat } = require('./utils/eventUtils')
 const { EVENT_STATUS, PAYMENT_STATUS } = require('../enums/index')
-
+const { getNowGMT8Time } = require('../utils/timeUtils')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -289,8 +289,7 @@ const getOrgEventsData = async (orgUserId) => {
                 ticket_total: parseInt(event.ticket_total, 10),
                 ticket_purchaced: parseInt(event.ticket_purchaced, 10)
             }
-            const now = new Date();
-            const nowGmt8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+            const nowGMT8 = getNowGMT8Time()
             const end = new Date(noStatusOrders.end_at);
 
             // 判斷狀態分類
@@ -299,7 +298,7 @@ const getOrgEventsData = async (orgUserId) => {
             } else if (status === EVENT_STATUS.REJECTED) {
                 result.rejected.push(noStatusOrders);
             } else if (status === EVENT_STATUS.APPROVED) {
-                if (end > nowGmt8) {
+                if (end > nowGMT8) {
                     result.holding.push(noStatusOrders);
                 } else {
                     result.finished.push(noStatusOrders);
@@ -400,10 +399,11 @@ const getStausOrgEventsData = async (orgUserId, queryStatus) => {
         const eventRepository = dataSource.getRepository('Event')
         const queryBuilder = eventRepository.createQueryBuilder("event").where("event.user_id = :orgUserId", { orgUserId: orgUserId })
 
+        const nowGMT8 = getNowGMT8Time()
         if (queryStatus === EVENT_STATUS.FINISHED) {
-            queryBuilder.andWhere("event.status = :status AND event.end_at < NOW()", { status: EVENT_STATUS.APPROVED })
+            queryBuilder.andWhere("event.status = :status AND event.end_at < :now", { status: EVENT_STATUS.APPROVED, now: nowGMT8 })
         } else if (queryStatus === EVENT_STATUS.HOLDING) {
-            queryBuilder.andWhere("event.status = :status AND event.end_at > NOW()", { status: EVENT_STATUS.APPROVED })
+            queryBuilder.andWhere("event.status = :status AND event.end_at > :now", { status: EVENT_STATUS.APPROVED, now: nowGMT8 })
         } else if (queryStatus === undefined) {
             //do nothing
         }
@@ -431,6 +431,7 @@ const getStausOrgEventsData = async (orgUserId, queryStatus) => {
 
 const getComingEventsData = async () => {
     try {
+        const nowGMT8 = getNowGMT8Time()
         const comingEvents = await dataSource.getRepository('Event')
             .createQueryBuilder("event")
             .innerJoin('event.Type', 'type')
@@ -442,7 +443,7 @@ const getComingEventsData = async () => {
                 "type.name AS type",
                 "event.city AS city"
             ])
-            .where("event.start_at > NOW()") // 活動尚未開始
+            .where("event.start_at > :now", {now : nowGMT8}) // 活動尚未開始
             .andWhere("event.status=:status", { status: EVENT_STATUS.APPROVED })
             // .andWhere("event.ticket_sale_start_at > NOW()")
             .orderBy("event.start_at", "ASC") // 最接近活動時間排前面
@@ -460,7 +461,7 @@ const getComingEventsData = async () => {
 
 const getTrendEventsData = async () => {
     try {
-
+        const nowGMT8 = getNowGMT8Time()
         const trendEvents = await dataSource.getRepository('Event')
             .createQueryBuilder("event")
             .innerJoin('event.Type', 'type')
@@ -473,7 +474,7 @@ const getTrendEventsData = async () => {
                 "event.view_count AS view_count",
                 "type.name AS type"
             ])
-            .where("event.end_at > NOW()") // 活動尚未結束
+            .where("event.end_at >:now", {now : nowGMT8}) // 活動尚未結束
             .andWhere("event.status=:status", { status: EVENT_STATUS.APPROVED })
             .orderBy("event.view_count", "DESC") // 瀏覽數高到低
             .addOrderBy("event.start_at", "ASC") // 瀏覽數相同則再依開始時間排序
@@ -574,6 +575,7 @@ const getAdminEvents = async () => {
             .createQueryBuilder("event")
             .leftJoin("event.Section", "section")
             .leftJoin('section.Seat', 'seat')
+            .where("event.status != :status", { status: EVENT_STATUS.REJECTED })
             .select([
                 "event.id AS id",
                 "event.title AS title",
@@ -1105,14 +1107,14 @@ module.exports = {
 
 
 function getSaleStatus(event) {
-    const now = new Date();
+    const nowGMT8 = getNowGMT8Time();
     const saleStartAt = new Date(event.sale_start_at);
     const saleEndAt = new Date(event.sale_end_at);
     if (event.status === EVENT_STATUS.CHECKING) {
         return '待審核';
-    } else if (saleStartAt <= now && now <= saleEndAt) {
+    }else if (saleStartAt <= nowGMT8 && nowGMT8 <= saleEndAt) {
         return '銷售中';
-    } else if (now > saleEndAt) {
+    } else if (nowGMT8 > saleEndAt) {
         return '銷售結束';
     } else {
         return '尚未銷售';

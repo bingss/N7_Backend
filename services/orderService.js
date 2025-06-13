@@ -5,6 +5,7 @@ const { dataSource } = require('../db/data-source')
 const { generateTicketQrcode } = require('../utils/qrcodeUtils')
 const { PAYMENT_METHOD,EVENT_STATUS,SEAT_STATUS,PAYMENT_STATUS  } = require('../enums/index')
 const cron = require('node-cron');
+const { getNowGMT8Time } = require('../utils/timeUtils')
 const ERROR_STATUS_CODE = 400;
 
 const createOrder = async (orderData, userId) => {
@@ -272,7 +273,7 @@ const cleanExpiredOrderJob = () => {
             .leftJoinAndSelect('order.Ticket', 'ticket')
             .leftJoinAndSelect('ticket.Seat', 'seat')
             .where('order.payment_status = :status', { status: PAYMENT_STATUS.PENDING })
-            .andWhere("order.created_at + interval '16 minutes' < now()")
+            .andWhere("order.created_at + interval '16 minutes' < NOW()") //都用UTC不用轉換
             .getMany();
 
 
@@ -289,7 +290,8 @@ const cleanExpiredOrderJob = () => {
                 }
             }
             // 刪除過期訂單Ticket
-            await ticketRepository.remove(order.Ticket);
+            // await ticketRepository.remove(order.Ticket);
+            
             // 將訂單標記為 expired
             order.payment_status = PAYMENT_STATUS.EXPIRED;
             
@@ -311,10 +313,10 @@ module.exports = {
 
 
 function isNotSaling(event) {
-    const now = new Date();
+    const nowGMT8 = getNowGMT8Time()
     const saleStartAt = new Date(event.sale_start_at);
     const saleEndAt = new Date(event.sale_end_at);
-    if (saleStartAt <= now && now <= saleEndAt) {
+    if (saleStartAt <= nowGMT8 && nowGMT8 <= saleEndAt) {
         return false; // 正在銷售中
     } else {
         return true; // 非屬銷售中
