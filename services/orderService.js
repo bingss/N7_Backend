@@ -290,7 +290,8 @@ const cleanExpiredOrderJob = () => {
                 }
             }
             // 刪除過期訂單Ticket
-            await ticketRepository.remove(order.Ticket);
+            // await ticketRepository.remove(order.Ticket);
+            
             // 將訂單標記為 expired
             order.payment_status = PAYMENT_STATUS.EXPIRED;
             
