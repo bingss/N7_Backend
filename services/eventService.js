@@ -761,30 +761,330 @@ const updateEventStatus = async (eventId, isApproved) => {
 const deleteEventData = async (orgUserId, eventId) => {
     const eventRepository = dataSource.getRepository('Event')
     const deleteEvent = await eventRepository
-            .createQueryBuilder("event")
-            .leftJoinAndSelect("event.Order", "order")
-            .where("event.id = :eventId", { eventId })
-            .andWhere("event.user_id = :orgUserId", { orgUserId: orgUserId })
-            .getOne();
+        .createQueryBuilder("event")
+        .leftJoinAndSelect("event.Order", "order")
+        .where("event.id = :eventId", { eventId })
+        .andWhere("event.user_id = :orgUserId", { orgUserId: orgUserId })
+        .getOne();
 
-    if ( !deleteEvent ) {
+    if (!deleteEvent) {
         throw appError(ERROR_STATUS_CODE, '活動不存在或無權限刪除')
     }
     if (deleteEvent.status === EVENT_STATUS.APPROVED) {
         throw appError(ERROR_STATUS_CODE, '活動已審核通過，不得刪除')
     }
-    if( deleteEvent.Order) {
+    if (deleteEvent.Order) {
         console.log(deleteEvent.Order)
-        if( deleteEvent.Order.some(order => order.payment_status !== PAYMENT_STATUS.EXPIRED) ) {
+        if (deleteEvent.Order.some(order => order.payment_status !== PAYMENT_STATUS.EXPIRED)) {
             throw appError(ERROR_STATUS_CODE, '活動有未過期訂單存在，無法刪除')
         }
     }
-    const deleteResult = await eventRepository.remove( deleteEvent );
+    const deleteResult = await eventRepository.remove(deleteEvent);
     if (deleteResult === 0) {
         throw appError(ERROR_STATUS_CODE, '刪除活動失敗')
     }
     return
 }
+
+// getAdminEventsRevenue1 & getAdminEventsRevenue2 is for testing
+// const getAdminEventsRevenue1 = async (eventId) => {
+//     try {
+
+//         const event = await dataSource.getRepository('Event')
+//             .createQueryBuilder('event')
+//             .leftJoinAndSelect('event.Type', 'type')
+//             .leftJoinAndSelect('event.Section', 'section')
+//             .leftJoinAndSelect('section.Seat', 'seat')
+//             // .leftJoinAndSelect('seat.Ticket', 'ticket')
+//             .where('event.id = :id', { id: eventId })
+//             .andWhere('event.status = :status', { status: 'approved' })
+//             .getOne(); // ⚠️ 回傳巢狀物件而非 raw flat 結果
+
+//         // console.log('🧪 SQL:', queryBuilder.getSql());
+//         // console.log('🧪 Params:', queryBuilder.getParameters());
+
+//         if (!event) {
+//             throw appError(404, '找不到該活動');
+//         }
+
+//         // // 計算每個區域的剩餘座位 (status 為 'available')
+//         // event.Section.forEach(section => {
+//         //     section.remainingSeats = section.Seat.filter(seat => seat.status === 'available').length;
+//         // });
+
+//         // event.Section.forEach(section => {
+//         //     // 只保留剩餘座位數，不返回 seat 的資料
+
+//         //     section.remainingSeats = section.Seat ? section.Seat.filter(seat => seat.status === 'available').length : 0;
+//         //     delete section.Seat;
+//         // });
+
+//         // 計算 event_status
+//         const now = new Date();
+//         const saleStart = new Date(event.sale_start_at);
+//         const saleEnd = new Date(event.sale_end_at);
+
+//         let event_status = '';
+//         if (now < saleStart) {
+//             event_status = '尚未開賣';
+//         } else if (now >= saleStart && now <= saleEnd) {
+//             event_status = '銷售中';
+//         } else {
+//             event_status = '已結束';
+//         }
+
+//         // 轉換 sections 資料
+//         const sections = event.Section.map(section => {
+//             const quantity = section.Seat ? section.Seat.length : 0;
+//             const sold = section.Seat ? section.Seat.filter(seat => seat.status === 'sold').length : 0;
+//             const sale_rate = quantity > 0 ? ((sold / quantity) * 100).toFixed(1) + '%' : '0%';
+//             const revenue = sold * section.price_default;
+
+//             return {
+//                 section_name: section.section,
+//                 price: section.price_default,
+//                 quantity: quantity,
+//                 sold: sold,
+//                 sale_rate: sale_rate,
+//                 revenue: revenue
+//             };
+//         });
+
+//         // 整理回傳資料
+//         return {
+//             event_id: event.id,
+//             event_status: event_status,
+//             cover_image_url: event.cover_image_url,
+//             title: event.title,
+//             location: event.location,
+//             // start_at: formatDateTime(event.start_at),      // 加上格式化
+//             // end_at: formatDateTime(event.end_at),          // 加上格式化
+//             // sale_start_at: formatDateTime(event.sale_start_at), // 加上格式化
+//             // sale_end_at: formatDateTime(event.sale_end_at),     // 加上格式化
+//             sections: sections
+//         };
+
+//         // const formatDateTime = (date) => {
+//         //     const d = new Date(date);
+//         //     const year = d.getFullYear();
+//         //     const month = (d.getMonth() + 1).toString().padStart(2, '0');
+//         //     const day = d.getDate().toString().padStart(2, '0');
+//         //     const hours = d.getHours().toString().padStart(2, '0');
+//         //     const minutes = d.getMinutes().toString().padStart(2, '0');
+//         //     return `${year}-${month}-${day} ${hours}:${minutes}`;
+//         // };
+
+
+//         // return event;
+//     } catch (error) {
+//         if (error.status) {
+//             throw error;
+//         }
+//         console.error('getAdminEventsRevenue error:', error);
+//         throw appError(400, '發生錯誤');
+//     }
+// }
+// const getAdminEventsRevenue2 = async (eventId) => {
+//     try {
+//         // 先查出活動資料 + Section + Seat
+//         const event = await dataSource.getRepository('Event')
+//             .createQueryBuilder('event')
+//             .leftJoinAndSelect('event.Type', 'type')
+//             .leftJoinAndSelect('event.Section', 'section')
+//             .leftJoinAndSelect('section.Seat', 'seat')
+//             .where('event.id = :id', { id: eventId })
+//             .andWhere('event.status = :status', { status: 'approved' })
+//             .getOne();
+
+//         if (!event) {
+//             throw appError(404, '找不到該活動');
+//         }
+
+//         // 計算 event_status
+//         const now = new Date();
+//         const saleStart = new Date(event.sale_start_at);
+//         const saleEnd = new Date(event.sale_end_at);
+
+//         let event_status = '';
+//         if (now < saleStart) {
+//             event_status = '尚未開賣';
+//         } else if (now >= saleStart && now <= saleEnd) {
+//             event_status = '銷售中';
+//         } else {
+//             event_status = '已結束';
+//         }
+
+//         // 計算 Sections 資料
+//         const sections = event.Section.map(section => {
+//             const quantity = section.Seat ? section.Seat.length : 0;
+//             const sold = section.Seat ? section.Seat.filter(seat => seat.status === 'sold').length : 0;
+//             const sale_rate = quantity > 0 ? ((sold / quantity) * 100).toFixed(1) + '%' : '0%';
+//             const revenue = sold * section.price_default;
+
+//             return {
+//                 section_name: section.section,
+//                 price: section.price_default,
+//                 quantity: quantity,
+//                 sold: sold,
+//                 sale_rate: sale_rate,
+//                 revenue: revenue
+//             };
+//         });
+
+//         // 查詢訂單購票紀錄
+//         const ordersRaw = await dataSource.getRepository('Order')
+//             .createQueryBuilder('order')
+//             .leftJoin('order.Ticket', 'ticket')
+//             .where('order.event_id = :eventId', { eventId })
+//             .select([
+//                 'order.id AS order_id',
+//                 'order.created_at AS created_at',
+//                 'COUNT(ticket.id) AS quantity'
+//             ])
+//             .groupBy('order.id, order.created_at')
+//             .orderBy('order.created_at', 'ASC')
+//             .getRawMany();
+
+//         const orders = ordersRaw.map(order => {
+//             return {
+//                 order_id: order.order_id,
+//                 created_at: formatDateTime(order.created_at),
+//                 quantity: parseInt(order.quantity, 10)
+//             };
+//         });
+
+//         // 組合回傳格式
+//         return {
+//             event_id: event.id,
+//             event_status: event_status,
+//             cover_image_url: event.cover_image_url,
+//             title: event.title,
+//             location: event.location,
+//             start_at: formatDateTime(event.start_at),
+//             end_at: formatDateTime(event.end_at),
+//             sale_start_at: formatDateTime(event.sale_start_at),
+//             sale_end_at: formatDateTime(event.sale_end_at),
+//             sections: sections,
+//             orders: orders
+//         };
+
+//     } catch (error) {
+//         if (error.status) {
+//             throw error;
+//         }
+//         console.error('getAdminEventsRevenue error:', error);
+//         throw appError(400, '發生錯誤');
+//     }
+// };
+const formatDateTime = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
+
+
+
+
+const getAdminEventsRevenue = async (eventId) => {
+    try {
+        // 查出 event + Section + Seat
+        const event = await dataSource.getRepository('Event')
+            .createQueryBuilder('event')
+            .leftJoinAndSelect('event.Type', 'type')
+            .leftJoinAndSelect('event.Section', 'section')
+            .leftJoinAndSelect('section.Seat', 'seat')
+            .where('event.id = :id', { id: eventId })
+            .andWhere('event.status = :status', { status: 'approved' })
+            .getOne();
+
+        if (!event) {
+            throw appError(404, '找不到該活動');
+        }
+
+        // 計算 event_status
+        const now = getNowGMT8Time();
+        const saleStart = new Date(event.sale_start_at);
+        const saleEnd = new Date(event.sale_end_at);
+
+        let event_status = '';
+        if (now < saleStart) {
+            event_status = '尚未開賣';
+        } else if (now >= saleStart && now <= saleEnd) {
+            event_status = '銷售中';
+        } else {
+            event_status = '已結束';
+        }
+
+        // 處理 section 資料 + 每個 section 查出 orders
+        const sections = [];
+
+        for (const section of event.Section) {
+            const quantity = section.Seat ? section.Seat.length : 0;
+            const sold = section.Seat ? section.Seat.filter(seat => seat.status === 'sold').length : 0;
+            const sale_rate = quantity > 0 ? ((sold / quantity) * 100).toFixed(1) + '%' : '0%';
+            const revenue = sold * section.price_default;
+
+            // 查詢該 section 的 orders
+            const sectionOrdersRaw = await dataSource.getRepository('Order')
+                .createQueryBuilder('order')
+                .leftJoin('order.Ticket', 'ticket')
+                .leftJoin('ticket.Seat', 'seat')
+                .where('order.event_id = :eventId', { eventId })
+                .andWhere('seat.section_id = :sectionId', { sectionId: section.id })
+                .andWhere('order.payment_status = :paymentStatus', { paymentStatus: 'paid' })
+                .select([
+                    'order.id AS order_id',
+                    'order.created_at AS created_at',
+                    'COUNT(ticket.id) AS quantity'
+                ])
+                .groupBy('order.id, order.created_at')
+                .orderBy('order.created_at', 'ASC')
+                .getRawMany();
+
+            const sectionOrders = sectionOrdersRaw.map(order => ({
+                order_id: order.order_id,
+                created_at: formatDateTime(new Date(order.created_at.getTime() + 8 * 60 * 60 * 1000)),
+                quantity: parseInt(order.quantity, 10)
+            }));
+
+            // 塞入 sections
+            sections.push({
+                section_name: section.section,
+                price: section.price_default,
+                quantity: quantity,
+                sold: sold,
+                sale_rate: sale_rate,
+                revenue: revenue,
+                orders: sectionOrders // <== 每個 section 自己的 orders
+            });
+        }
+
+        // 回傳
+        return {
+            event_id: event.id,
+            event_status: event_status,
+            cover_image_url: event.cover_image_url,
+            title: event.title,
+            location: event.location,
+            start_at: formatDateTime(event.start_at),
+            end_at: formatDateTime(event.end_at),
+            sale_start_at: formatDateTime(event.sale_start_at),
+            sale_end_at: formatDateTime(event.sale_end_at),
+            sections: sections
+        };
+
+    } catch (error) {
+        if (error.status) {
+            throw error;
+        }
+        console.error('getAdminEventsRevenue error:', error);
+        throw appError(400, '發生錯誤');
+    }
+};
 
 
 module.exports = {
@@ -801,7 +1101,8 @@ module.exports = {
     getAdminEvents,
     getCheckingEvent,
     updateEventStatus,
-    deleteEventData
+    deleteEventData,
+    getAdminEventsRevenue
 }
 
 
