@@ -809,6 +809,8 @@ function getSaleStatus(event) {
     const saleEndAt = new Date(event.sale_end_at);
     if (event.status === EVENT_STATUS.CHECKING) {
         return '待審核';
+    }else if (event.status === EVENT_STATUS.REJECTED) {
+        return '被拒絕';
     } else if (saleStartAt <= now && now <= saleEndAt) {
         return '銷售中';
     } else if (now > saleEndAt) {
