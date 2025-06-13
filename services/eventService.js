@@ -1006,7 +1006,7 @@ const getAdminEventsRevenue = async (eventId) => {
         }
 
         // 計算 event_status
-        const now = new Date();
+        const now = getNowGMT8Time();
         const saleStart = new Date(event.sale_start_at);
         const saleEnd = new Date(event.sale_end_at);
 
@@ -1047,7 +1047,7 @@ const getAdminEventsRevenue = async (eventId) => {
 
             const sectionOrders = sectionOrdersRaw.map(order => ({
                 order_id: order.order_id,
-                created_at: formatDateTime(order.created_at),
+                created_at: formatDateTime(new Date(order.created_at.getTime() + 8 * 60 * 60 * 1000)),
                 quantity: parseInt(order.quantity, 10)
             }));
 
