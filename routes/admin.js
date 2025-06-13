@@ -20,23 +20,25 @@ const isAuth = require('../middlewares/auth')({
 })
 
 // 26.查看一般會員列表
-router.get('/users',isAuth, authRole, handleErrorAsync(adminController.getUsers));
+router.get('/users', isAuth, authRole, handleErrorAsync(adminController.getUsers));
 
 //27.取得單一活動資訊
-router.get('/events/:eventId',isAuth, authRole, handleErrorAsync(adminController.getEvent));
+router.get('/events/:eventId', isAuth, authRole, handleErrorAsync(adminController.getEvent));
 
 //28.活動審核(修改狀態)
-router.patch('/events/:eventId',isAuth, authRole, handleErrorAsync(adminController.patchEventStatus));
+router.patch('/events/:eventId', isAuth, authRole, handleErrorAsync(adminController.patchEventStatus));
 
 //29.取得所有活動列表
-router.get('/events',isAuth, authRole, handleErrorAsync(adminController.getEvents));
+router.get('/events', isAuth, authRole, handleErrorAsync(adminController.getEvents));
 
 // 30. 取得單一使用者資料
-router.get('/users/:userId',isAuth, authRole, handleErrorAsync(adminController.getUser));
+router.get('/users/:userId', isAuth, authRole, handleErrorAsync(adminController.getUser));
 
 // 31.使用者審核(切換封鎖狀態)
-router.patch('/users/:userId/toggle-block',isAuth, authRole, handleErrorAsync(adminController.patchUserStatus));
+router.patch('/users/:userId/toggle-block', isAuth, authRole, handleErrorAsync(adminController.patchUserStatus));
 
+// 32.取得活動營收
+router.get('/events/revenue/:eventId', isAuth, authRole, handleErrorAsync(adminController.getEventRevenue));
 
 
 
