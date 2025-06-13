@@ -3,6 +3,7 @@ const logger = require('../utils/logger')('TicketsService')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
 const { TICKET_STATUS,PAYMENT_STATUS  } = require('../enums/index')
+const { getNowGMT8Time } = require('../utils/timeUtils')
 const ERROR_STATUS_CODE = 400;
 
 
@@ -62,16 +63,15 @@ const verifyTicket = async (ticketInfo, orgEventId, orgUserId) => {
 
 
 
-        const now = new Date();
+        const nowGMT8 = getNowGMT8Time()
         const start = new Date( ticketWithUserEvent.event_start_at );
         const end = new Date( ticketWithUserEvent.event_end_at );
-        const dayBeforeStart = new Date(start.getTime() - 24 * 60 * 60 * 1000); 
+        // const dayBeforeStart = new Date(start.getTime() - 24 * 60 * 60 * 1000); 
+        // if(nowGMT8 < dayBeforeStart){
+        //     throw appError(ERROR_STATUS_CODE, `活動開始前1天，票券才開放驗證`)
+        // }
 
-        if(now < dayBeforeStart){
-            throw appError(ERROR_STATUS_CODE, `活動開始前1天，票券才開放驗證`)
-        }
-
-        if(end < now) {
+        if(end < nowGMT8) {
             throw appError(ERROR_STATUS_CODE, `票券活動已結束`)
         }
 

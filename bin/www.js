@@ -42,10 +42,6 @@ server.on('error', onError);
 server.listen(port, async () => {
   try {
     await dataSource.initialize()
-    .then(async () => {
-      // 設定 PostgreSQL session 時區
-      await dataSource.query(`SET TIME ZONE 'Asia/Taipei';`);
-    })
     
     cleanExpiredOrderJob(); // 啟動清理過期訂單的定時任務
     logger.info('啟動清理過期訂單的定時任務');
