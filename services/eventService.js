@@ -290,7 +290,6 @@ const getOrgEventsData = async (orgUserId) => {
                 ticket_purchaced: parseInt(event.ticket_purchaced, 10)
             }
             const now = new Date();
-            const nowGmt8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
             const end = new Date(noStatusOrders.end_at);
 
             // 判斷狀態分類
@@ -299,7 +298,7 @@ const getOrgEventsData = async (orgUserId) => {
             } else if (status === EVENT_STATUS.REJECTED) {
                 result.rejected.push(noStatusOrders);
             } else if (status === EVENT_STATUS.APPROVED) {
-                if (end > nowGmt8) {
+                if (end > now) {
                     result.holding.push(noStatusOrders);
                 } else {
                     result.finished.push(noStatusOrders);
