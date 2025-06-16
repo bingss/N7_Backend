@@ -6,7 +6,7 @@ const { dataSource } = require('../db/data-source')
 const userService = require('../services/userService')
 const eventService = require('../services/eventService')
 const { uploadImage } = require('../utils/imageUtils')
-const { proposeEventValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
+const { proposeEventValid, isUndefined, isNotValidString, isNotValidUuid } = require('../utils/validUtils');
 const { decodeTicketQrcode } = require('../utils/qrcodeUtils')
 const { EVENT_STATUS, EVENT_CHINESE_STATUS, USER_ROLE, USER_STATUS } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
@@ -21,7 +21,7 @@ const getUsers = async (req, res, next) => {
 }
 
 const getUser = async (req, res, next) => {
-    const{ userId } = req.params;
+    const { userId } = req.params;
     if (isUndefined(userId) || isNotValidString(userId) || isNotValidUuid(userId)) {
         next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
         return
@@ -36,7 +36,7 @@ const getUser = async (req, res, next) => {
 }
 
 const patchUserStatus = async (req, res, next) => {
-    const{ userId } = req.params;
+    const { userId } = req.params;
     if (isUndefined(userId) || isNotValidString(userId) || isNotValidUuid(userId)) {
         next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'))
         return
@@ -46,9 +46,9 @@ const patchUserStatus = async (req, res, next) => {
     res.status(200).json({
         status: true,
         message: "修改成功",
-        data:{
-            id : userId,
-            isBlocked : isBlocked
+        data: {
+            id: userId,
+            isBlocked: isBlocked
         }
     })
 };
@@ -96,6 +96,18 @@ const getEvents = async (req, res, next) => {
     })
 }
 
+const getEventRevenue = async (req, res, next) => {
+    const { eventId } = req.params;
+
+    const events = await eventService.getAdminEventsRevenue(eventId)
+
+    res.status(200).json({
+        status: true,
+        message: "取得成功",
+        data: events
+    })
+}
+
 
 module.exports = {
     getUsers,
@@ -103,5 +115,6 @@ module.exports = {
     patchUserStatus,
     patchEventStatus,
     getEvent,
-    getEvents
+    getEvents,
+    getEventRevenue
 }
