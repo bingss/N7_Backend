@@ -491,6 +491,7 @@ const getTrendEventsData = async () => {
 
 const getAllEventsData = async () => {
     try {
+        const nowGMT8 = getNowGMT8Time()
         const eventsData = dataSource.getRepository('Event')
             .createQueryBuilder('event')
             .innerJoin('event.Type', 'type')
@@ -503,6 +504,7 @@ const getAllEventsData = async () => {
                 "event.city AS city"
             ])
             .where("event.status = :status", { status: 'approved' })
+            .andWhere("event.end_at >:now", {now : nowGMT8}) // 活動尚未結束
             .orderBy("event.start_at", "ASC")
         const events = await eventsData.getRawMany();
         const total = await eventsData.getCount();
