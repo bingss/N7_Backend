@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const { toDate } = require('./timeUtils')
+const { toDate,getNowGMT8Time } = require('./timeUtils')
 const config = require('../config/index')
 const allowedDomains = [
   'http://localhost',
@@ -135,6 +135,9 @@ const proposeEventValid  = z.object({
       required_error: '票數未填寫正確', invalid_type_error: '票數未填寫正確'
       }).int().positive('票數未填寫正確'),
   })).min(1, '分區設定未填寫正確'),
+  }).refine((data) => toDate(data.start_at) > getNowGMT8Time(), {
+    path: ['start_at'],
+    message: '活動開始時間必須晚於現在時間',
   }).refine((data) => toDate(data.start_at) < toDate(data.end_at), {
     path: ['start_at'],
     message: '開始時間必須早於結束時間',
