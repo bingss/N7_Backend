@@ -48,21 +48,21 @@ LumiTix 是一套現代化、前後端分離的活動票務管理系統。
 
 ## 快速開始
 
-### 前置需求
+#### 前置需求
 * Node.js (v20+)
 * PostgreSQL
 * Docker (可選)
-### 安裝步驟
-1. 複製專案：
+#### 安裝步驟
+#### 1. 複製專案：
 ```Bash Run
 git clone https://github.com/your-repo/lumitix-backend.git
 cd lumitix-backend
 ```
-2. 安裝依賴套件：
+#### 2. 安裝依賴套件：
 ```Bash Run
 npm install
 ```
-3. 設定環境變數：
+#### 3. 設定環境變數：
 複製 .env.example 為 .env 並填入適當值：
 ```Env Apply
 # PostgreSQL 設定
@@ -115,17 +115,17 @@ GOOGLE_BIND_REDIRECTFRONTURL=https://frontend.yourdomain.com/bind-success
 GOOGLE_REDIRECT_ALLOWDOMAIN=yourdomain.com
 ```
 
-4. 啟動服務：
+#### 4. 啟動服務：
 
-啟動Docker建置環境：
+##### 啟動Docker建置環境：
 ```Bash Run
 npm run start
 ```
-使用 Node.js 啟動（開發環境）：
+##### 使用 Node.js 啟動（開發環境）：
 ```Bash Run
 npm run dev
 ```
-或部署於Render執行：
+##### 或部署於Render執行：
 ```Bash Run
 npm run start2
 ```
@@ -133,7 +133,7 @@ npm run start2
 ## API 文件
 API 端點文件請參考 [API 文件連結](https://www.notion.so/1af6a246851881dfa483f8d3d4b4c595?v=1af6a246851881fea119000c86ad2ccc)
 
-主要 API 路由：
+#### 主要 API 路由：
 * /api/v1/users - 使用者相關
 * /api/v1/organizer - 活動方相關
 * /api/v1/events - 活動相關
