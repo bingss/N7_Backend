@@ -5,7 +5,7 @@ const appError = require('../utils/appError')
 const config = require('../config/index')
 const { verifyJWT } = require('../utils/jwtUtils');
 const { isRedirectUriAllowed } = require('../utils/validUtils');
-const { USER_ROLE, USER_STATUS } = require('../enums/index')
+const { USER_ROLE, USER_STATUS, PAYMENT_STATUS } = require('../enums/index')
 const ERROR_STATUS_CODE = 400;
 const accountAuthRepository = dataSource.getRepository('AccountAuth')
 const userRepository = dataSource.getRepository('User')
@@ -173,6 +173,7 @@ const getUsersData = async () => {
                 .leftJoin("user.Order", "order")
                 .leftJoin("order.Ticket", "ticket")
                 .where("user.role=:role", { role: USER_ROLE.GENERAL })
+                .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
                 .select([
                     "user.id AS id",
                     "user.serialNo AS serialNo",
@@ -214,6 +215,7 @@ const getOneUserData = async (userId) => {
                 .leftJoin("order.Ticket", "ticket")
                 .leftJoin("order.Event", "event")
                 .where("user.id=:id", { id: userId })
+                .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
                 .select([
                     "user.id AS user_id",
                     "user.serialNo AS user_serialNo",
