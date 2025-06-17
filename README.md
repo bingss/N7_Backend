@@ -143,5 +143,5 @@ bingss-n7_backend.git/
 ### 貢獻指南
 歡迎提交 Pull Request。對於重大變更，請先開 Issue 討論。
 
-#### 授權
+### 授權
 MIT License
