@@ -115,6 +115,7 @@ npm run start2
 
 ### API 文件
 API 端點文件請參考 [API 文件連結](https://www.notion.so/1af6a246851881dfa483f8d3d4b4c595?v=1af6a246851881fea119000c86ad2ccc)
+
 主要 API 路由：
 * /api/v1/users - 使用者相關
 * /api/v1/organizer - 活動方相關
