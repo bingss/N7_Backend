@@ -1,36 +1,53 @@
-## LumiTix 活動票務系統後端
+# LumiTix 活動票務系統後端
 ![Hero-desktop](https://github.com/user-attachments/assets/00567602-fb1b-4668-a08e-dff414564473)
 
-### 專案簡介
-LumiTix 是一個現代化的活動票務管理系統，採用前後端分離架構。此專案為後端部分，使用 Node.js + PostgreSQL 技術，提供完整的票務管理功能，包含活動建立、票券銷售、訂單處理、驗票等功能。
+## 專案簡介
+LumiTix 是一套現代化、前後端分離的活動票務管理系統。
+此專案為後端部分，使用 Node.js + PostgreSQL 技術，提供完整的票務管理功能，包含活動建立、票券銷售、訂單處理、驗票等功能。
 
-### 功能特色
-* 三種使用者角色：
-  * 一般使用者：瀏覽活動、購買票券、管理訂單
-  * 活動方：建立和管理活動、驗票
-  * 平台方：審核活動、管理使用者
-* 完整票務流程：
-  * 活動建立與審核
-  * 分區座位管理
-  * 線上購票與支付整合
-  * 電子票券與 QR Code 驗票
-* 第三方整合：
-  * Google OAuth 登入
-  * 藍新金流支付
-  * Firebase 圖片儲存
-### 使用技術
-* 後端：
-  * Node.js (v20+)
-  * Express.js
-  * TypeORM
-  * JWT 驗證
-* 資料庫：
-  * PostgreSQL
-* 環境建立：
-  * Docker
-  * Docker Compose
+## 系統功能
+
+#### 使用者角色
+
+- **一般使用者**：瀏覽活動、購票、管理訂單
+- **活動方**：建立與管理活動、執行驗票
+- **平台方**：審核活動、管理用戶
+
+#### 核心功能
+
+- 活動建立與審核流程
+- 分區與座位管理
+- 線上購票與整合金流
+- 電子票券 + QR Code 驗票
+
+#### 第三方整合
+
+- Google OAuth 登入
+- 藍新金流支付
+- Firebase 圖片儲存
+ 
+  
+## 使用技術
+
+#### 後端
+- Node.js (v20+)
+- Express.js
+- TypeORM
+- JWT 驗證
+
+#### 資料庫
+- PostgreSQL
+
+#### 第三方整合
+- Google OAuth
+- 藍新金流 API
+- Firebase 儲存
+
+#### 開發與部署
+- Docker & Docker Compose
 
 ## 快速開始
+
 ### 前置需求
 * Node.js (v20+)
 * PostgreSQL
@@ -100,11 +117,11 @@ GOOGLE_REDIRECT_ALLOWDOMAIN=yourdomain.com
 
 4. 啟動服務：
 
-使用 Docker：
+啟動Docker建置環境：
 ```Bash Run
 npm run start
 ```
-啟動Docker後即可執行：
+使用 Node.js 啟動（開發環境）：
 ```Bash Run
 npm run dev
 ```
@@ -113,7 +130,7 @@ npm run dev
 npm run start2
 ```
 
-### API 文件
+## API 文件
 API 端點文件請參考 [API 文件連結](https://www.notion.so/1af6a246851881dfa483f8d3d4b4c595?v=1af6a246851881fea119000c86ad2ccc)
 
 主要 API 路由：
@@ -123,9 +140,9 @@ API 端點文件請參考 [API 文件連結](https://www.notion.so/1af6a24685188
 * /api/v1/orders - 訂單相關
 * /api/v1/admin - 平台管理相關
 
-### 專案結構
+## 專案結構
 ```Apply
-bingss-n7_backend.git/
+lumitix-backend/
 ├── config/          # 設定檔
 ├── controllers/     # 控制器
 ├── db/              # 資料庫連線設定
@@ -140,8 +157,8 @@ bingss-n7_backend.git/
 └── Dockerfile
 ```
 
-### 貢獻指南
+## 貢獻指南
 歡迎提交 Pull Request。對於重大變更，請先開 Issue 討論。
 
-### 授權
+## 授權
 MIT License
