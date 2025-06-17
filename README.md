@@ -1,4 +1,5 @@
 ## LumiTix 活動票務系統後端
+<img src="https://github.com/user-attachments/assets/c84b27e4-5a65-43c0-a19d-ab838c236f34" height="75%" width="75%" />
 
 ### 專案簡介
 LumiTix 是一個現代化的活動票務管理系統，採用前後端分離架構。此專案為後端部分，使用 Node.js + PostgreSQL 技術，提供完整的票務管理功能，包含活動建立、票券銷售、訂單處理、驗票等功能。
