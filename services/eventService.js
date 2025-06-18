@@ -218,6 +218,7 @@ const getEditEventData = async (orgUserId, eventId) => {
                 'section.price_default AS price',
                 'COUNT(seat.id) AS ticket_total'
             ])
+            .orderBy('section.display_order', 'ASC')
             .groupBy('event.id, section.id, type.id')
             .getRawMany();
 
@@ -353,6 +354,7 @@ const getOneOrgEventData = async (orgUserId, eventId) => {
                 "COUNT(seat.id) AS ticket_total",
                 "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
             ])
+            .orderBy('section.display_order', 'ASC')
             .groupBy('event.id, section.id, type.id')
             .getRawMany();
 
@@ -533,6 +535,7 @@ const getEventById = async (eventId) => {
             // .leftJoinAndSelect('seat.Ticket', 'ticket')
             .where('event.id = :id', { id: eventId })
             .andWhere('event.status = :status', { status: 'approved' })
+            .orderBy('section.display_order', 'ASC')
             .getOne(); // ⚠️ 回傳巢狀物件而非 raw flat 結果
 
         // console.log('🧪 SQL:', queryBuilder.getSql());
@@ -655,6 +658,7 @@ const getCheckingEvent = async (eventId) => {
                 'SUM(CASE WHEN seat.status = \'reserved\' THEN 1 ELSE 0 END) AS reserved_seats',
                 'SUM(CASE WHEN seat.status = \'available\' THEN 1 ELSE 0 END) AS available_seats'
             ])
+            .orderBy('section.display_order', 'ASC')
             .groupBy('event.id, user.id, section.id, type.id')
             .getRawMany();
 
@@ -788,196 +792,6 @@ const deleteEventData = async (orgUserId, eventId) => {
     return
 }
 
-// getAdminEventsRevenue1 & getAdminEventsRevenue2 is for testing
-// const getAdminEventsRevenue1 = async (eventId) => {
-//     try {
-
-//         const event = await dataSource.getRepository('Event')
-//             .createQueryBuilder('event')
-//             .leftJoinAndSelect('event.Type', 'type')
-//             .leftJoinAndSelect('event.Section', 'section')
-//             .leftJoinAndSelect('section.Seat', 'seat')
-//             // .leftJoinAndSelect('seat.Ticket', 'ticket')
-//             .where('event.id = :id', { id: eventId })
-//             .andWhere('event.status = :status', { status: 'approved' })
-//             .getOne(); // ⚠️ 回傳巢狀物件而非 raw flat 結果
-
-//         // console.log('🧪 SQL:', queryBuilder.getSql());
-//         // console.log('🧪 Params:', queryBuilder.getParameters());
-
-//         if (!event) {
-//             throw appError(404, '找不到該活動');
-//         }
-
-//         // // 計算每個區域的剩餘座位 (status 為 'available')
-//         // event.Section.forEach(section => {
-//         //     section.remainingSeats = section.Seat.filter(seat => seat.status === 'available').length;
-//         // });
-
-//         // event.Section.forEach(section => {
-//         //     // 只保留剩餘座位數，不返回 seat 的資料
-
-//         //     section.remainingSeats = section.Seat ? section.Seat.filter(seat => seat.status === 'available').length : 0;
-//         //     delete section.Seat;
-//         // });
-
-//         // 計算 event_status
-//         const now = new Date();
-//         const saleStart = new Date(event.sale_start_at);
-//         const saleEnd = new Date(event.sale_end_at);
-
-//         let event_status = '';
-//         if (now < saleStart) {
-//             event_status = '尚未開賣';
-//         } else if (now >= saleStart && now <= saleEnd) {
-//             event_status = '銷售中';
-//         } else {
-//             event_status = '已結束';
-//         }
-
-//         // 轉換 sections 資料
-//         const sections = event.Section.map(section => {
-//             const quantity = section.Seat ? section.Seat.length : 0;
-//             const sold = section.Seat ? section.Seat.filter(seat => seat.status === 'sold').length : 0;
-//             const sale_rate = quantity > 0 ? ((sold / quantity) * 100).toFixed(1) + '%' : '0%';
-//             const revenue = sold * section.price_default;
-
-//             return {
-//                 section_name: section.section,
-//                 price: section.price_default,
-//                 quantity: quantity,
-//                 sold: sold,
-//                 sale_rate: sale_rate,
-//                 revenue: revenue
-//             };
-//         });
-
-//         // 整理回傳資料
-//         return {
-//             event_id: event.id,
-//             event_status: event_status,
-//             cover_image_url: event.cover_image_url,
-//             title: event.title,
-//             location: event.location,
-//             // start_at: formatDateTime(event.start_at),      // 加上格式化
-//             // end_at: formatDateTime(event.end_at),          // 加上格式化
-//             // sale_start_at: formatDateTime(event.sale_start_at), // 加上格式化
-//             // sale_end_at: formatDateTime(event.sale_end_at),     // 加上格式化
-//             sections: sections
-//         };
-
-//         // const formatDateTime = (date) => {
-//         //     const d = new Date(date);
-//         //     const year = d.getFullYear();
-//         //     const month = (d.getMonth() + 1).toString().padStart(2, '0');
-//         //     const day = d.getDate().toString().padStart(2, '0');
-//         //     const hours = d.getHours().toString().padStart(2, '0');
-//         //     const minutes = d.getMinutes().toString().padStart(2, '0');
-//         //     return `${year}-${month}-${day} ${hours}:${minutes}`;
-//         // };
-
-
-//         // return event;
-//     } catch (error) {
-//         if (error.status) {
-//             throw error;
-//         }
-//         console.error('getAdminEventsRevenue error:', error);
-//         throw appError(400, '發生錯誤');
-//     }
-// }
-// const getAdminEventsRevenue2 = async (eventId) => {
-//     try {
-//         // 先查出活動資料 + Section + Seat
-//         const event = await dataSource.getRepository('Event')
-//             .createQueryBuilder('event')
-//             .leftJoinAndSelect('event.Type', 'type')
-//             .leftJoinAndSelect('event.Section', 'section')
-//             .leftJoinAndSelect('section.Seat', 'seat')
-//             .where('event.id = :id', { id: eventId })
-//             .andWhere('event.status = :status', { status: 'approved' })
-//             .getOne();
-
-//         if (!event) {
-//             throw appError(404, '找不到該活動');
-//         }
-
-//         // 計算 event_status
-//         const now = new Date();
-//         const saleStart = new Date(event.sale_start_at);
-//         const saleEnd = new Date(event.sale_end_at);
-
-//         let event_status = '';
-//         if (now < saleStart) {
-//             event_status = '尚未開賣';
-//         } else if (now >= saleStart && now <= saleEnd) {
-//             event_status = '銷售中';
-//         } else {
-//             event_status = '已結束';
-//         }
-
-//         // 計算 Sections 資料
-//         const sections = event.Section.map(section => {
-//             const quantity = section.Seat ? section.Seat.length : 0;
-//             const sold = section.Seat ? section.Seat.filter(seat => seat.status === 'sold').length : 0;
-//             const sale_rate = quantity > 0 ? ((sold / quantity) * 100).toFixed(1) + '%' : '0%';
-//             const revenue = sold * section.price_default;
-
-//             return {
-//                 section_name: section.section,
-//                 price: section.price_default,
-//                 quantity: quantity,
-//                 sold: sold,
-//                 sale_rate: sale_rate,
-//                 revenue: revenue
-//             };
-//         });
-
-//         // 查詢訂單購票紀錄
-//         const ordersRaw = await dataSource.getRepository('Order')
-//             .createQueryBuilder('order')
-//             .leftJoin('order.Ticket', 'ticket')
-//             .where('order.event_id = :eventId', { eventId })
-//             .select([
-//                 'order.id AS order_id',
-//                 'order.created_at AS created_at',
-//                 'COUNT(ticket.id) AS quantity'
-//             ])
-//             .groupBy('order.id, order.created_at')
-//             .orderBy('order.created_at', 'ASC')
-//             .getRawMany();
-
-//         const orders = ordersRaw.map(order => {
-//             return {
-//                 order_id: order.order_id,
-//                 created_at: formatDateTime(order.created_at),
-//                 quantity: parseInt(order.quantity, 10)
-//             };
-//         });
-
-//         // 組合回傳格式
-//         return {
-//             event_id: event.id,
-//             event_status: event_status,
-//             cover_image_url: event.cover_image_url,
-//             title: event.title,
-//             location: event.location,
-//             start_at: formatDateTime(event.start_at),
-//             end_at: formatDateTime(event.end_at),
-//             sale_start_at: formatDateTime(event.sale_start_at),
-//             sale_end_at: formatDateTime(event.sale_end_at),
-//             sections: sections,
-//             orders: orders
-//         };
-
-//     } catch (error) {
-//         if (error.status) {
-//             throw error;
-//         }
-//         console.error('getAdminEventsRevenue error:', error);
-//         throw appError(400, '發生錯誤');
-//     }
-// };
 const formatDateTime = (date) => {
     const d = new Date(date);
     const year = d.getFullYear();
@@ -987,8 +801,6 @@ const formatDateTime = (date) => {
     const minutes = d.getMinutes().toString().padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
-
-
 
 
 const getAdminEventsRevenue = async (eventId) => {
@@ -1001,6 +813,7 @@ const getAdminEventsRevenue = async (eventId) => {
             .leftJoinAndSelect('section.Seat', 'seat')
             .where('event.id = :id', { id: eventId })
             .andWhere('event.status = :status', { status: 'approved' })
+            .orderBy('section.display_order', 'ASC')
             .getOne();
 
         if (!event) {
