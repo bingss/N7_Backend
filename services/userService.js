@@ -173,14 +173,14 @@ const getUsersData = async () => {
                 .leftJoin("user.Order", "order")
                 .leftJoin("order.Ticket", "ticket")
                 .where("user.role=:role", { role: USER_ROLE.GENERAL })
-                .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
+                // .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
                 .select([
                     "user.id AS id",
                     "user.serialNo AS serialNo",
                     "user.name AS name",
                     "user.email AS email",
                     // "user.role AS role",
-                    "COUNT(ticket.id) AS count",
+                    "COUNT(CASE WHEN order.payment_status = 'paid' THEN ticket.id ELSE NULL END) AS count",
                     "(CASE WHEN user.status = 'active' THEN false ELSE true END) AS isblocked"
                 ])
                 .groupBy("user.id")
