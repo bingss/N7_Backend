@@ -215,7 +215,7 @@ const getOneUserData = async (userId) => {
                 .leftJoin("order.Ticket", "ticket")
                 .leftJoin("order.Event", "event")
                 .where("user.id=:id", { id: userId })
-                .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
+                // .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
                 .select([
                     "user.id AS user_id",
                     "user.serialNo AS user_serialNo",
@@ -226,6 +226,7 @@ const getOneUserData = async (userId) => {
 
                     "order.id AS order_id",
                     "event.title AS event_title",
+
                     "COUNT(ticket.id) AS ticket_puchased",
                     "SUM(CASE WHEN ticket.status = 'used' THEN 1 ELSE 0 END) AS ticket_used",
                     "SUM(ticket.price_paid) AS total_price",
@@ -248,7 +249,9 @@ const getOneUserData = async (userId) => {
                     role: base.user_role,
                     isBlocked: base.isblocked,
                 },
-                orders: base.order_id === null ? [] : userWithInfos.map(order => ({
+                orders: base.order_id === null ? [] : userWithInfos
+                        .filter(order => order.payment_status === PAYMENT_STATUS.PAID)
+                        .map(order => ({
                             order_id: order.order_id,
                             event_title: order.event_title,
                             ticket_puchased: parseInt(order.ticket_puchased, 10),
