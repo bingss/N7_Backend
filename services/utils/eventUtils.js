@@ -26,13 +26,16 @@ async function compareChangedData(originalData, newData, eventId) {
 }
 
 async function generateSectionAndSeat(manager, newEventData, eventId){
+        let display_order = 0;
         // 儲存分區資料
         const newSections = newEventData.sections.map((section) => {
+            display_order += 1;
             return manager.getRepository('Section').create({
-              section: section.section_name,
-              total_seats: section.ticket_total,
-              price_default: section.price,
-              event_id: eventId,
+                section: section.section_name,
+                total_seats: section.ticket_total,
+                price_default: section.price,
+                event_id: eventId,
+                display_order: display_order,
             });
         });
         const savedSections = await manager.getRepository('Section').save(newSections);

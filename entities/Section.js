@@ -19,6 +19,11 @@ module.exports = new EntitySchema({
       nullable: false,
       default: 0
     },
+    display_order: {
+      type: 'integer',
+      nullable: false,
+      default: 1
+    },
     event_id: {
       type: "uuid",
       nullable: false
