@@ -262,8 +262,8 @@ const updateOrderStatus = async ( orderNo, paymentType ) => {
 }
 
 const cleanExpiredOrderJob = () => {
-//   cron.schedule('0,32 * * * *', async () => {
-    cron.schedule('* * * * *', async () => {
+  cron.schedule('0,32 * * * *', async () => {
+    // cron.schedule('* * * * *', async () => {
         logger.info('[CRON] 開始清理過期訂單');
         const orderRepository = dataSource.getRepository('Order')
         const seatRepository = dataSource.getRepository('Seat')
