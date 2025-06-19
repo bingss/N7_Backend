@@ -262,7 +262,8 @@ const updateOrderStatus = async ( orderNo, paymentType ) => {
 }
 
 const cleanExpiredOrderJob = () => {
-  cron.schedule('0,32 * * * *', async () => {
+//   cron.schedule('0,32 * * * *', async () => {
+    cron.schedule('* * * * *', async () => {
         logger.info('[CRON] 開始清理過期訂單');
         const orderRepository = dataSource.getRepository('Order')
         const seatRepository = dataSource.getRepository('Seat')
@@ -287,11 +288,14 @@ const cleanExpiredOrderJob = () => {
                 if (ticket.Seat) {
                     ticket.Seat.status = SEAT_STATUS.AVAILABLE;
                     await seatRepository.save(ticket.Seat);
+
+                    ticket.Seat = null;
+                    ticket.seat_id = null; // 如果 ticket 上有外鍵欄位 seat_id 的話
+                    await ticketRepository.save(ticket); // 更新票券
                 }
             }
             // 刪除過期訂單Ticket
             // await ticketRepository.remove(order.Ticket);
-            
             // 將訂單標記為 expired
             order.payment_status = PAYMENT_STATUS.EXPIRED;
             

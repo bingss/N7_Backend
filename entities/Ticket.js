@@ -41,7 +41,7 @@ module.exports = new EntitySchema({
     },
     seat_id: {
       type: "uuid",
-      nullable: false
+      nullable: true
     },
     order_id: {
       type: "uuid",
