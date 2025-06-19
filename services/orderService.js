@@ -154,10 +154,10 @@ const getOneOrderData = async ( userId, orderId ) => {
         const rawTicket = await orderRepository
             .createQueryBuilder("order")
             .leftJoin("order.Event", "event")
-            .leftJoin("event.Section", "section")
             .leftJoin("order.User", "user")
             .leftJoin("order.Ticket", "ticket")
             .leftJoin("ticket.Seat", "seat")
+            .leftJoin("seat.Section", "section")
             .where("order.id = :orderId", { orderId: orderId })
             .andWhere("order.user_id = :userId", { userId: userId })
             .select([
