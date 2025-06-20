@@ -95,9 +95,9 @@ const createOrBindGoogleAccount = async (req, accessToken, refreshToken, profile
             if ( existingUsers.length !== 0) {
                 const googleUser = existingUsers.find( ( user ) => user.provider === currentProvider && user.provider_id === currentProviderId)
                 if( googleUser ){
-                    console.log(googleUser)
+                    // console.log(googleUser)
                     if(googleUser.status === USER_STATUS.BLOCKED){
-                        console.log(googleUser)
+                        // console.log(googleUser)
                         return cb( null, false, { googleErrorRedirect: `${redirectURL}?error=blocked` } );
                     }
                     return cb(null, googleUser, cbStateData);

@@ -26,7 +26,7 @@ const googleCallback = async (req, res, next) => {
             //     sameSite: 'None' // 跨域支援
             // });
             
-            res.redirect(`${ redirectURL }?state=success&token=${token}&name=${ encodeURIComponent( user.name ) }`);
+            res.redirect(`${ redirectURL }?state=success&token=${token}&name=${encodeURIComponent( user.name )}&role=${user.role}`);
         }
     })(req, res, next);
 }
