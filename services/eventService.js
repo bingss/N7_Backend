@@ -352,7 +352,7 @@ const getOneOrgEventData = async (orgUserId, eventId) => {
                 'section.section AS section_name',
                 'section.price_default AS price',
                 "COUNT(seat.id) AS ticket_total",
-                "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
+                "SUM(CASE WHEN seat.status != 'available' THEN 1 ELSE 0 END) AS ticket_purchaced"
             ])
             .orderBy('section.display_order', 'ASC')
             .groupBy('event.id, section.id, type.id')
