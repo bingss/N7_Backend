@@ -8,8 +8,7 @@ function genDataChain(order) {
   }&Version=${order.Version}&MerchantOrderNo=${order.MerchantOrderNo}&Amt=${
     order.Amt
   }&ItemDesc=${encodeURIComponent(order.ItemDesc)}&Email=${encodeURIComponent(
-    order.Email,
-  )}`;
+    order.Email)}&ANDROIDPAY=${order.ANDROIDPAY}&SAMSUNGPAY=${order.SAMSUNGPAY}&VACC=${order.VACC}`;
 }
 
 // 使用 aes 加密
