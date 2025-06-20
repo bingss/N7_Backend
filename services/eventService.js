@@ -276,7 +276,7 @@ const getOrgEventsData = async (orgUserId) => {
                 "event.end_at AS end_at",
                 "event.status AS status",
                 "COUNT(seat.id) AS ticket_total",
-                "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
+                "SUM(CASE WHEN seat.status = 'available' THEN 1 ELSE 0 END) AS ticket_purchaced"
             ])
             .groupBy("event.id")
             .getRawMany();
