@@ -162,5 +162,14 @@ lumitix-backend/
 ## 貢獻指南
 歡迎提交 Pull Request。對於重大變更，請先開 Issue 討論。
 
+以下為本專案分工及GitHub資訊:
+| 姓名（暱稱）     | 負責角色 | GitHub                                  |
+|------------------|----------|------------------------------------------|
+| Mos              | 前端     | [mos25399](https://github.com/mos25399) |
+| YYL              | 前端     | [YYL0911](https://github.com/YYL0911)   |
+| LKP              | 全端     | [LKP0617](https://github.com/LKP0617)   |
+| Carson Chang (KY)| 後端     | [Carson0220](https://github.com/Carson0220) |
+| sian             | 後端     | [bingss](https://github.com/bingss)     |
+
 ## 授權
 MIT License
