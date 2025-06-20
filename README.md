@@ -5,7 +5,19 @@
 LumiTix 是一套現代化、前後端分離的活動票務管理系統。
 此專案為後端部分，使用 Node.js + PostgreSQL 技術，提供完整的票務管理功能，包含活動建立、票券銷售、訂單處理、驗票等功能。
 
-前端連結請參考[前端GitHub](https://github.com/YYL0911/LumiTix-vite)
+---
+### 前台網址與測試帳號資訊
+
+[前端網址](https://yyl0911.github.io/LumiTix-vite/)  [前端GitHub](https://github.com/YYL0911/LumiTix-vite)
+| 測試帳號     | 密碼 | 身份        |
+|------------------|----------|------------------------------------------|
+| test1@gmail.com   | Abc123456     | 使用者 |
+| organizer@gmail.com     | Abcd1234    | 活動舉辦者  |
+| admin@gmail.com	     | Abcd1234	     | 平台管理者   |
+		
+		
+
+
 
 ## 系統功能
 
