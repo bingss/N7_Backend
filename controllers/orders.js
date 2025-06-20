@@ -30,7 +30,10 @@ const postOrder = async (req, res, next) => {
             Amt: orderPrice,
             ItemDesc: `${eventTitle}票券`,
             Email: req.user.email,
-            TradeLimit : 900
+            TradeLimit : 900,
+            ANDROIDPAY: 0,
+            SAMSUNGPAY : 0,
+            VACC: 0
         }
         // 加密第一段字串，此段主要是提供交易內容給予藍新金流
         const aesEncrypt = orderUtils.create_mpg_aes_encrypt(order);
