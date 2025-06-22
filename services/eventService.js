@@ -839,7 +839,7 @@ const getAdminEventsRevenue = async (eventId) => {
 
         for (const section of event.Section) {
             const quantity = section.Seat ? section.Seat.length : 0;
-            const sold = section.Seat ? section.Seat.filter(seat => seat.status === 'sold').length : 0;
+            const sold = section.Seat ? section.Seat.filter(seat => seat.status !== PAYMENT_STATUS.AVAILABLE).length : 0;
             const sale_rate = quantity > 0 ? ((sold / quantity) * 100).toFixed(1) + '%' : '0%';
             const revenue = sold * section.price_default;
 
@@ -850,7 +850,7 @@ const getAdminEventsRevenue = async (eventId) => {
                 .leftJoin('ticket.Seat', 'seat')
                 .where('order.event_id = :eventId', { eventId })
                 .andWhere('seat.section_id = :sectionId', { sectionId: section.id })
-                .andWhere('order.payment_status = :paymentStatus', { paymentStatus: 'paid' })
+                .andWhere('order.payment_status = :paymentStatus', { paymentStatus: PAYMENT_STATUS.PAID })
                 .select([
                     'order.id AS order_id',
                     'order.created_at AS created_at',
