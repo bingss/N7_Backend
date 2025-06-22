@@ -7,8 +7,8 @@ function genDataChain(order) {
     order.TimeStamp
   }&Version=${order.Version}&MerchantOrderNo=${order.MerchantOrderNo}&Amt=${
     order.Amt
-  }&ItemDesc=${encodeURIComponent(order.ItemDesc)}&Email=${encodeURIComponent(
-    order.Email)}&ANDROIDPAY=${order.ANDROIDPAY}&SAMSUNGPAY=${order.SAMSUNGPAY}&VACC=${order.VACC}`;
+  }&ItemDesc=${encodeURIComponent(order.ItemDesc)}&WEBATM=${order.WEBATM}&Email=${encodeURIComponent(
+    order.Email)}&TradeLimit=${order.TradeLimit}&ANDROIDPAY=${order.ANDROIDPAY}&SAMSUNGPAY=${order.SAMSUNGPAY}&VACC=${order.VACC}`;
 }
 
 // 使用 aes 加密

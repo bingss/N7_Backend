@@ -31,6 +31,7 @@ const postOrder = async (req, res, next) => {
             ItemDesc: `${eventTitle}票券`,
             Email: req.user.email,
             TradeLimit : 900,
+            WEBATM : 1,
             ANDROIDPAY: 0,
             SAMSUNGPAY :0,
             VACC: 0

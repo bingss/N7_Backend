@@ -32,16 +32,16 @@
           return {
             order: {},
             purchaseInfo:{
-              "event_id": "d9e671dc-6f7b-49f4-a2f1-baa5b8d98fad",
+              "event_id": "1dee21b1-a137-4b00-960c-e6c5c036de96",
                 "tickets":[
                     {
-                        "section_id": "b483011f-753f-458d-b936-36d1dd48850c",
-                        "quantity":2
-                    },
-                    {
-                        "section_id": "c21499c1-4adc-4baa-8eea-145026e9312e",
+                        "section_id": "aa93319b-39ef-42b3-bc80-fe56bfaf25f9",
                         "quantity":1
                     }
+                    // {
+                    //     "section_id": "c21499c1-4adc-4baa-8eea-145026e9312e",
+                    //     "quantity":1
+                    // }
                 ]
             },
             token: '',
@@ -52,11 +52,13 @@
           async createOrder() {
             try {
               const url = `${host}`;
+              console.log(host)
               const res = await axios.post(url, this.purchaseInfo, {
                 headers: {
                   'Authorization': `Bearer ${this.token}`
                 }
               });
+              console.log(res)
               this.result = res;
               this.order = res.data.data;
             } catch (err) {
