@@ -3,14 +3,14 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('OrdersController')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
-const { getOrdersData, getOneOrderData, createOrder ,updateOrderStatus } = require('../services/orderService')
-const { orderValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
+const { getOrdersData, getOneOrderData, createOrder, updateOrderStatus } = require('../services/orderService')
+const { orderValid, isUndefined, isNotValidString, isNotValidUuid } = require('../utils/validUtils');
 const orderUtils = require('../utils/orderUtils')
 const ERROR_STATUS_CODE = 400;
 
 
 const postOrder = async (req, res, next) => {
-    try{
+    try {
         // 驗證資料
         const result = orderValid.safeParse(req.body);
         if (!result.success) {
@@ -18,7 +18,7 @@ const postOrder = async (req, res, next) => {
             throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤');
         }
         //新增訂單
-        const { eventTitle , orderNo, orderPrice  } = await createOrder(result.data, req.user.id)
+        const { eventTitle, orderNo, orderPrice } = await createOrder(result.data, req.user.id)
 
         //建立藍新需要資訊
         const TimeStamp = Math.round(new Date().getTime() / 1000);
@@ -30,10 +30,11 @@ const postOrder = async (req, res, next) => {
             Amt: orderPrice,
             ItemDesc: `${eventTitle}票券`,
             Email: req.user.email,
-            TradeLimit : 900,
+            TradeLimit: 900,
             ANDROIDPAY: 0,
-            SAMSUNGPAY :0,
-            VACC: 0
+            SAMSUNGPAY: 0,
+            VACC: 0,
+            PaymentMethod: 'WebATM'
         }
         // 加密第一段字串，此段主要是提供交易內容給予藍新金流
         const aesEncrypt = orderUtils.create_mpg_aes_encrypt(order);
@@ -50,7 +51,7 @@ const postOrder = async (req, res, next) => {
                 Version: order.Version
             }
         })
-    }catch (error) {
+    } catch (error) {
         logger.error(`[postOrder]發生錯誤：${error.message}`);
         if (error.status) {
             throw error;
@@ -64,7 +65,7 @@ const postOrder = async (req, res, next) => {
 
 
 const postPaymentNotify = async (req, res, next) => {
-    try{
+    try {
         // console.log('req.body notify data', req.body);
         const response = req.body;
         const thisShaEncrypt = orderUtils.create_mpg_sha_encrypt(response.TradeInfo);
@@ -97,7 +98,7 @@ const postPaymentNotify = async (req, res, next) => {
         // console.log('付款完成，訂單：', orders[data?.Result?.MerchantOrderNo]);
 
         return res.end();
-    }catch (error) {
+    } catch (error) {
         logger.error(`[postPaymentNotify]付款狀態修改錯誤：${error.message}`);
         if (error.status) {
             throw error;
@@ -108,7 +109,7 @@ const postPaymentNotify = async (req, res, next) => {
 }
 
 const postPaymentReturn = async (req, res, next) => {
-    try{
+    try {
         // console.log('req.body Return data', req.body);
         const response = req.body;
         const thisShaEncrypt = orderUtils.create_mpg_sha_encrypt(response.TradeInfo);
@@ -127,7 +128,7 @@ const postPaymentReturn = async (req, res, next) => {
         // /tickets/:id/payment_result
         res.redirect(`${config.get('newpay.returnUrl')}/#/tickets/${order.id}/payment_result`);
 
-    }catch (error) {
+    } catch (error) {
         logger.error(`[postPaymentReturn]付款返回錯誤：${error.message}`);
         res.redirect(`${config.get('newpay.returnUrl')}/#/ErrorPage`);
     }
