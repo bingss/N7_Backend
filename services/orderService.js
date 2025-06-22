@@ -186,7 +186,7 @@ const getOneOrderData = async ( userId, orderId ) => {
 
                 "ticket.status AS status"
             ])
-            .orderBy('ticket.serialNo', 'ASC')
+            .orderBy('seat.seat_number', 'ASC')
             .getRawMany();
             
         if (rawTicket.length === 0) throw appError(ERROR_STATUS_CODE, '訂單不存在');
