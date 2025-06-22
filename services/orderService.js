@@ -136,6 +136,7 @@ const getOrdersData = async ( userId ) => {
             ])
             .groupBy("event.id")
             .addGroupBy("order.id")
+            .orderBy('event.start_at', 'ASC')
             .getRawMany();
     
         return orders
@@ -185,6 +186,7 @@ const getOneOrderData = async ( userId, orderId ) => {
 
                 "ticket.status AS status"
             ])
+            .orderBy('ticket.serialNo', 'ASC')
             .getRawMany();
             
         if (rawTicket.length === 0) throw appError(ERROR_STATUS_CODE, '訂單不存在');

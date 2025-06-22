@@ -279,6 +279,7 @@ const getOrgEventsData = async (orgUserId) => {
                 "SUM(CASE WHEN seat.status != 'available' THEN 1 ELSE 0 END) AS ticket_purchaced"
             ])
             .groupBy("event.id")
+            .orderBy('event.start_at', 'ASC')
             .getRawMany();
 
         // 依照結束時間、status分類          
