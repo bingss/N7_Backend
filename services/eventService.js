@@ -592,7 +592,7 @@ const getAdminEvents = async () => {
                 "event.sale_start_at AS sale_start_at",
                 "event.sale_end_at AS sale_end_at",
                 "COUNT(seat.id) AS ticket_total",
-                "SUM(CASE WHEN seat.status = 'sold' THEN 1 ELSE 0 END) AS ticket_purchaced"
+                "SUM(CASE WHEN seat.status != 'available' THEN 1 ELSE 0 END) AS ticket_purchaced"
             ])
             .groupBy("event.id")
             .orderBy("event.start_at", "ASC")
@@ -654,8 +654,8 @@ const getCheckingEvent = async (eventId) => {
                 'section.section AS section_name',
                 'section.price_default AS price',
                 'COUNT(seat.id) AS quantity',
-                'SUM(CASE WHEN seat.status = \'sold\' THEN 1 ELSE 0 END) AS sold_seats',
-                'SUM(CASE WHEN seat.status = \'reserved\' THEN 1 ELSE 0 END) AS reserved_seats',
+                'SUM(CASE WHEN seat.status != \'available\' THEN 1 ELSE 0 END) AS sold_seats',
+                // 'SUM(CASE WHEN seat.status = \'reserved\' THEN 1 ELSE 0 END) AS reserved_seats',
                 'SUM(CASE WHEN seat.status = \'available\' THEN 1 ELSE 0 END) AS available_seats'
             ])
             .orderBy('section.display_order', 'ASC')
@@ -700,7 +700,7 @@ const getCheckingEvent = async (eventId) => {
                 price: row.price,
                 quantity: parseInt(row.quantity, 10),
                 sold_seats: parseInt(row.sold_seats, 10),
-                reserved_seats: parseInt(row.reserved_seats, 10),
+                // reserved_seats: parseInt(row.reserved_seats, 10),
                 available_seats: parseInt(row.available_seats, 10)
             }))
         };
