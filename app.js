@@ -10,7 +10,7 @@ const indexRouter = require('./routes/index')
 const eventsRouter = require('./routes/events')
 const googleRouter = require('./routes/google')
 const adminRouter = require('./routes/admin')
-
+const aiSearchRouter = require("./routes/aiSearch");
 
 const app = express()
 
@@ -50,6 +50,7 @@ app.use('/api/v1/orders', ordersRouter)
 app.use('/api/v1/events', eventsRouter)
 app.use('/api/v1/google', googleRouter)
 app.use('/api/v1/admin', adminRouter)
+app.use("/api/v1/ai-search", aiSearchRouter);
 app.use('/api/v1/', indexRouter)
 
 // eslint-disable-next-line no-unused-vars
