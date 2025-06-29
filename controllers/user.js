@@ -1,5 +1,6 @@
 const { dataSource } = require('../db/data-source')
 const appError = require('../utils/appError')
+const logger = require('../utils/logger')('User')
 
 const bcrypt = require('bcryptjs');
 
@@ -343,8 +344,94 @@ const userController = {
       console.error('putPassword error:', err);
       res.status(500).json({ status: false, message: '伺服器錯誤' });
     }
+  },
+
+  // 取得使用者收藏資料
+  async getCollect(req, res, next) {
+    const userId = req.user.id
+     try {
+        const collectRepository = dataSource.getRepository('Collect')
+        const collects = await collectRepository
+            .createQueryBuilder("collect")
+            .leftJoin("collect.Event", "event")
+            .where("collect.user_id = :userId", { userId: userId })
+            .select([
+                "event.id AS id",
+                "event.title AS title",
+                "event.location AS location",
+                "event.start_at AS start_at",
+                "event.end_at AS end_at",
+                "event.sale_start_at AS sale_start_at",
+                "event.sale_end_at AS sale_end_at",
+                "event.cover_image_url AS cover_image_url",
+            ])
+            .getRawMany();
+
+        res.status(200).json({
+            status: true,
+            message: "取得收藏列表成功",
+            data: collects
+        })
+    }catch (error) {
+        if (error.status) {
+            throw error;
+        }
+        logger.error(`[getCollectData] 取得收藏列表失敗: ${error}`)
+        throw appError(ERROR_STATUS_CODE, '發生錯誤')
+    }
+    return
+  },
+
+  // 變更使用者收藏資料
+  async patchEventCollect(req, res, next) {
+    const { eventId } = req.params;
+    const userId = req.user.id;
+    if (isUndefined(eventId) ) {
+      next(appError(ERROR_STATUS_CODE, '欄位未填寫正確'));
+      return;
+    }
+
+    let msg = '';
+    try {
+      const collectRepository = dataSource.getRepository('Collect');
+      const event = await collectRepository.findOne({
+        where: {
+          user_id: userId,
+          event_id: eventId,
+        }
+      });
+      if (!event) {
+        const newCollect = collectRepository.create({
+          user_id: userId,
+          event_id: eventId,
+        });
+        const savedCollect = await collectRepository.save(newCollect);
+        if (!savedCollect) {
+          throw appError(ERROR_STATUS_CODE, '收藏失敗');
+        }
+        msg = '已加入收藏';
+      } else {
+        await collectRepository.remove(event);
+        msg = '已刪除收藏';
+      }
+
+      res.status(200).json({
+        status: true,
+        message: msg,
+      });
+
+    } catch (err) {
+      logger.error(`[patchEventCollect]${err}`);
+      if (err.status) {
+        return next(err);
+      }
+      next(appError(ERROR_STATUS_CODE, '發生錯誤'));
+    }
   }
 };
+
+
+
 
 
 module.exports = userController
