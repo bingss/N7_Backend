@@ -22,11 +22,18 @@ async function parseSearchQuery(userQuery) {
 
     <rules>
       - 你的任務是從句子中提取「地點(location)」、「活動類型(category)」、「開始日期(start_date)」、「結束日期(end_date)」。
+      - 如果句子的主要目的看起來是在詢問一個「特定的活動名稱」，請優先將它提取到 title 欄位。
+      - 如果提取了 title，就可以忽略其他條件。
       - **最重要規則：如果句子中完全沒有提到任何與「時間」或「日期」相關的詞彙（例如：今天、明天、週末、下個月、六月、日期...等），你「絕對不能」回傳 start_date 和 end_date 這兩個欄位。**
       - category 的值必須是「演唱會」、「音樂會」、「舞台劇」、「其他」之一。如果句子中的類型不符，請忽略 category 欄位。
       - 地點請標準化為台灣的縣市名稱。
       - 今天的日期是 ${today}，所有時間計算都以此為基準。
     </rules>
+
+    <example>
+      句子："我想找山城奇遇記的活動"
+      JSON輸出: {"title": "山城奇遇記"}
+    </example>
 
     <example>
       句子："我想找兩個月內在台中的舞台劇"
@@ -72,23 +79,28 @@ async function queryEventsFromDB(criteria) {
     .where("event.status = :status", { status: "approved" })
     .andWhere("event.start_at > :now", { now: new Date() });
 
-  if (criteria.location) {
-    queryBuilder.andWhere("(event.city = :location OR event.location LIKE :locationLike)", {
-      location: criteria.location,
-      locationLike: `%${criteria.location}%`,
-    });
-  }
-
-  if (criteria.category) {
-    queryBuilder.andWhere("type.name = :category", { category: criteria.category });
-  }
-
-  // --- 新增的日期範圍查詢邏輯 ---
-  if (criteria.start_date && criteria.end_date) {
-    queryBuilder.andWhere("event.start_at BETWEEN :start AND :end", {
-      start: criteria.start_date,
-      end: dayjs(criteria.end_date).endOf("day").toDate(), // 包含結束日期的整天
-    });
+  // --- 新增的標題搜尋邏輯 ---
+  // 如果 AI 解析出標題，就優先用標題來搜尋
+  if (criteria.title) {
+    // 使用 Like 進行模糊搜尋，例如 "山城" 也能找到 "《山城奇遇記》"
+    queryBuilder.andWhere("event.title LIKE :title", { title: `%${criteria.title}%` });
+  } else {
+    // 如果沒有標題，才使用地點、類型、日期的複合查詢
+    if (criteria.location) {
+      queryBuilder.andWhere("(event.city = :location OR event.location LIKE :locationLike)", {
+        location: criteria.location,
+        locationLike: `%${criteria.location}%`,
+      });
+    }
+    if (criteria.category) {
+      queryBuilder.andWhere("type.name = :category", { category: criteria.category });
+    }
+    if (criteria.start_date && criteria.end_date) {
+      queryBuilder.andWhere("event.start_at BETWEEN :start AND :end", {
+        start: criteria.start_date,
+        end: dayjs(criteria.end_date).endOf("day").toDate(),
+      });
+    }
   }
 
   const events = await queryBuilder.orderBy("event.start_at", "ASC").take(10).getMany();
