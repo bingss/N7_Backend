@@ -353,7 +353,7 @@ const userController = {
         const collectRepository = dataSource.getRepository('Collect')
         const collects = await collectRepository
             .createQueryBuilder("collect")
-            .leftJoin("collect.Event2", "event")
+            .leftJoin("collect.Event", "event")
             .where("collect.user_id = :userId", { userId: userId })
             .select([
                 "event.id AS id",
