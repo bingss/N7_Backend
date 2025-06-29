@@ -3,14 +3,14 @@ const config = require('../config/index')
 const logger = require('../utils/logger')('OrdersController')
 const appError = require('../utils/appError')
 const { dataSource } = require('../db/data-source')
-const { getOrdersData, getOneOrderData, createOrder ,updateOrderStatus } = require('../services/orderService')
-const { orderValid,isUndefined,isNotValidString,isNotValidUuid } = require('../utils/validUtils');
+const { getOrdersData, getOneOrderData, createOrder, updateOrderStatus } = require('../services/orderService')
+const { orderValid, isUndefined, isNotValidString, isNotValidUuid } = require('../utils/validUtils');
 const orderUtils = require('../utils/orderUtils')
 const ERROR_STATUS_CODE = 400;
 
 
 const postOrder = async (req, res, next) => {
-    try{
+    try {
         // 驗證資料
         const result = orderValid.safeParse(req.body);
         if (!result.success) {
@@ -18,7 +18,7 @@ const postOrder = async (req, res, next) => {
             throw appError(ERROR_STATUS_CODE, '訂單欄位錯誤');
         }
         //新增訂單
-        const { eventTitle , orderNo, orderPrice  } = await createOrder(result.data, req.user.id)
+        const { eventTitle, orderNo, orderPrice } = await createOrder(result.data, req.user.id)
 
         //建立藍新需要資訊
         const TimeStamp = Math.round(new Date().getTime() / 1000);
@@ -30,10 +30,10 @@ const postOrder = async (req, res, next) => {
             Amt: orderPrice,
             ItemDesc: `${eventTitle}票券`,
             Email: req.user.email,
-            TradeLimit : 900,
-            WEBATM : 1,
+            TradeLimit: 900,
+            WEBATM: 1,
             ANDROIDPAY: 0,
-            SAMSUNGPAY :0,
+            SAMSUNGPAY: 0,
             VACC: 0
         }
         // 加密第一段字串，此段主要是提供交易內容給予藍新金流
@@ -51,7 +51,7 @@ const postOrder = async (req, res, next) => {
                 Version: order.Version
             }
         })
-    }catch (error) {
+    } catch (error) {
         logger.error(`[postOrder]發生錯誤：${error.message}`);
         if (error.status) {
             throw error;
@@ -62,10 +62,83 @@ const postOrder = async (req, res, next) => {
 
 }
 
+const refundOrder = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+        const userId = req.user.id;
 
+        if (isUndefined(orderId) || isNotValidString(orderId) || isNotValidUuid(orderId)) {
+            return next(appError(ERROR_STATUS_CODE, '發生錯誤'));
+        }
+
+        const orderRepo = dataSource.getRepository('Order');
+        const ticketRepo = dataSource.getRepository('Ticket');
+        const seatRepo = dataSource.getRepository('Seat');
+        const eventRepo = dataSource.getRepository('Event');
+
+        const order = await orderRepo.findOne({
+            where: { id: orderId, user_id: userId }
+        });
+
+        if (!order) {
+            return next(appError(404, '找不到此訂單'))
+        }
+
+        if (order.payment_status !== 'paid') {
+            return next(appError(ERROR_STATUS_CODE, '此訂單尚未付款或已退款'))
+        }
+
+        // 活動截止退款時間
+        const event = await eventRepo.findOne({ where: { id: order.event_id } });
+        if (!event) return next(appError(404, '找不到此活動'));
+
+        const refundDeadline = new Date(event.start_at);
+        refundDeadline.setUTCDate(refundDeadline.getUTCDate() - 7);
+        refundDeadline.setUTCHours(0, 0, 0, 0); // 設為當天 00:00:00 UTC
+        const now = new Date();
+
+        if (now > refundDeadline) {
+            return next(appError(400, '已超過可退款期限（活動前 7 天 00:00 截止）'));
+        }
+
+        order.payment_status = 'refunded';
+        order.refund_at = new Date();
+        await orderRepo.save(order);
+
+        // 更新票券狀態
+        const tickets = await ticketRepo.find({
+            where: { order_id: orderId },
+        });
+
+        for (const ticket of tickets) {
+            ticket.status = 'refunded';
+            await ticketRepo.save(ticket);
+
+            // 如果有座位，釋放座位狀態
+            if (ticket.seat_id) {
+                const seat = await seatRepo.findOne({ where: { id: ticket.seat_id } });
+                if (seat) {
+                    seat.status = 'available';
+                    await seatRepo.save(seat);
+                }
+            }
+        }
+
+        res.status(200).json({
+            status: true,
+            message: '訂單退款成功',
+        });
+    } catch (error) {
+        logger.error(`[refundOrder]退款錯誤：${error.message}`);
+        if (error.status) {
+            return next(error);
+        }
+        next(appError(ERROR_STATUS_CODE, '發生錯誤'));
+    }
+}
 
 const postPaymentNotify = async (req, res, next) => {
-    try{
+    try {
         // console.log('req.body notify data', req.body);
         const response = req.body;
         const thisShaEncrypt = orderUtils.create_mpg_sha_encrypt(response.TradeInfo);
@@ -98,7 +171,7 @@ const postPaymentNotify = async (req, res, next) => {
         // console.log('付款完成，訂單：', orders[data?.Result?.MerchantOrderNo]);
 
         return res.end();
-    }catch (error) {
+    } catch (error) {
         logger.error(`[postPaymentNotify]付款狀態修改錯誤：${error.message}`);
         if (error.status) {
             throw error;
@@ -109,7 +182,7 @@ const postPaymentNotify = async (req, res, next) => {
 }
 
 const postPaymentReturn = async (req, res, next) => {
-    try{
+    try {
         // console.log('req.body Return data', req.body);
         const response = req.body;
         const thisShaEncrypt = orderUtils.create_mpg_sha_encrypt(response.TradeInfo);
@@ -128,7 +201,7 @@ const postPaymentReturn = async (req, res, next) => {
         // /tickets/:id/payment_result
         res.redirect(`${config.get('newpay.returnUrl')}/#/tickets/${order.id}/payment_result`);
 
-    }catch (error) {
+    } catch (error) {
         logger.error(`[postPaymentReturn]付款返回錯誤：${error.message}`);
         res.redirect(`${config.get('newpay.returnUrl')}/#/ErrorPage`);
     }
@@ -167,7 +240,8 @@ module.exports = {
     getOneOrder,
     postOrder,
     postPaymentNotify,
-    postPaymentReturn
+    postPaymentReturn,
+    refundOrder
 }
 
 

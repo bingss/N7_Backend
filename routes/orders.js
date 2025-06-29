@@ -19,6 +19,9 @@ router.get('/test', (req, res) => {
 // 12.新增付款資訊(建立交易)(金流)
 router.post('/create', isAuth, handleErrorAsync(ordersController.postOrder))
 
+// 訂單退票
+router.post('/:orderId/refund', isAuth, handleErrorAsync(ordersController.refundOrder))
+
 // 13.確認交易：Notify回應付款結果(金流)
 router.post('/payment_notify', ordersController.postPaymentNotify);
 

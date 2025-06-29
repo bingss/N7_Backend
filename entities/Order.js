@@ -24,7 +24,7 @@ module.exports = new EntitySchema({
       type: "varchar",
       length: 10,
       nullable: false,
-      default:'pending',
+      default: 'pending',
       comment: 'paid、pending、expired...'
     },
     created_at: {
@@ -36,6 +36,11 @@ module.exports = new EntitySchema({
       type: "timestamp",
       updateDate: true,
       nullable: false
+    },
+    refund_at: {
+      type: "timestamp",
+      refundDate: true,
+      nullable: true
     },
     user_id: {
       type: "uuid",
@@ -58,15 +63,15 @@ module.exports = new EntitySchema({
       }
     },
     Event: {
-        type: "many-to-one",
-        target: "Event",
-        inverseSide: "Order",
-        joinColumn: {
-          name: "event_id",
-          referencedColumnName: 'id',
-          foreignKeyConstraintName: 'order_event_id_fk'
-        },
-        onDelete: "CASCADE"
+      type: "many-to-one",
+      target: "Event",
+      inverseSide: "Order",
+      joinColumn: {
+        name: "event_id",
+        referencedColumnName: 'id',
+        foreignKeyConstraintName: 'order_event_id_fk'
+      },
+      onDelete: "CASCADE"
     },
     Ticket: {
       type: "one-to-many",
