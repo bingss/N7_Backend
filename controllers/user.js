@@ -1,5 +1,6 @@
 const { dataSource } = require('../db/data-source')
 const appError = require('../utils/appError')
+const logger = require('../utils/logger')('User')
 
 const bcrypt = require('bcryptjs');
 
