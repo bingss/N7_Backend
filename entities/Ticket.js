@@ -27,7 +27,7 @@ module.exports = new EntitySchema({
       length: 10,
       nullable: false,
       default: 'unused',
-      comment: "'used', 'unused'"
+      comment: "'used', 'unused', 'refunded'"
     },
     created_at: {
       type: "timestamp",
