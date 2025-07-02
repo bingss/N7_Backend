@@ -115,7 +115,7 @@ const createOrder = async (orderData, userId) => {
     });
 }
 
-const refundOrder = async (userId, orderId) => {
+const refundOrderService = async (userId, orderId) => {
   return dataSource.transaction(async (manager) => {
     const orderRepo = manager.getRepository('Order');
     const ticketRepo = manager.getRepository('Ticket');
@@ -377,7 +377,7 @@ module.exports = {
     createOrder,
     updateOrderStatus,
     cleanExpiredOrderJob,
-    refundOrder
+    refundOrderService
 }
 
 
