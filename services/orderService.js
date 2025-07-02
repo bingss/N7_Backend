@@ -115,6 +115,62 @@ const createOrder = async (orderData, userId) => {
     });
 }
 
+const refundOrder = async (userId, orderId) => {
+  return dataSource.transaction(async (manager) => {
+    const orderRepo = manager.getRepository('Order');
+    const ticketRepo = manager.getRepository('Ticket');
+    const seatRepo = manager.getRepository('Seat');
+    const eventRepo = manager.getRepository('Event');
+
+    const order = await orderRepo.findOne({
+      where: { id: orderId, user_id: userId },
+    });
+
+    if (!order) throw appError(404, '找不到此訂單');
+
+    if (order.payment_status !== 'paid') {
+      throw appError(400, '此訂單尚未付款或已退款');
+    }
+
+    const event = await eventRepo.findOne({ where: { id: order.event_id } });
+    if (!event) throw appError(404, '找不到此活動');
+
+    const refundDeadline = new Date(event.start_at);
+    refundDeadline.setUTCDate(refundDeadline.getUTCDate() - 7);
+    refundDeadline.setUTCHours(0, 0, 0, 0);
+    const now = new Date();
+
+    if (now > refundDeadline) {
+      throw appError(400, '已超過可退款期限（活動前 7 天 00:00 截止）');
+    }
+
+    const tickets = await ticketRepo.find({ where: { order_id: orderId } });
+
+    if (tickets.some(ticket => ticket.status === 'used')) {
+      throw appError(400, '訂單內已有使用過的票券，無法退票');
+    }
+
+    order.payment_status = 'refunded';
+    order.refund_at = new Date();
+    await orderRepo.save(order);
+
+    for (const ticket of tickets) {
+    if (ticket.seat_id) {
+        const seat = await seatRepo.findOne({ where: { id: ticket.seat_id } });
+        if (seat && seat.status !== 'available') {
+            seat.status = 'available';
+            await seatRepo.save(seat);
+        }
+    }
+
+        ticket.status = 'refunded';
+        ticket.seat_id = null;
+        ticket.Seat = null;
+        await ticketRepo.save(ticket);
+    }
+  });
+};
+
 const getOrdersData = async ( userId ) => {
     try {
         const orderRepository = dataSource.getRepository('Order')
@@ -131,8 +187,12 @@ const getOrdersData = async ( userId ) => {
                 "event.start_at AS start_at",
                 "event.end_at AS end_at",
                 "event.cover_image_url AS cover_image_url",
-                //若有任一張票為'unused'，顯示為'unused'，全為'used'才設為'used'
-                "CASE WHEN MIN(CASE WHEN ticket.status = 'unused' THEN 0 ELSE 1 END) = 0 THEN 'unused' ELSE 'used' END AS ticket_status", 
+                //若有任一張票為'unused'，顯示為'unused'，若有任一張票為'refunded'，顯示為'refunded'，全為'used'才設為'used'
+                // "CASE WHEN MIN(CASE WHEN ticket.status = 'unused' THEN 0 ELSE 1 END) = 0 THEN 'unused' ELSE 'used' END AS ticket_status", 
+                `CASE 
+                    WHEN MIN(CASE WHEN ticket.status = 'unused' THEN 0 ELSE 1 END) = 0 THEN 'unused'
+                    WHEN MIN(CASE WHEN ticket.status = 'refunded' THEN 0 ELSE 1 END) = 0 THEN 'refunded'
+                    ELSE 'used' END AS ticket_status`,
             ])
             .groupBy("event.id")
             .addGroupBy("order.id")
@@ -314,7 +374,8 @@ module.exports = {
     getOneOrderData,
     createOrder,
     updateOrderStatus,
-    cleanExpiredOrderJob
+    cleanExpiredOrderJob,
+    refundOrder
 }
 
 
