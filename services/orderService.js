@@ -174,12 +174,14 @@ const refundOrder = async (userId, orderId) => {
 const getOrdersData = async ( userId ) => {
     try {
         const orderRepository = dataSource.getRepository('Order')
+        const statuses = [PAYMENT_STATUS.PAID, PAYMENT_STATUS.REFUNDED]
         const orders = await orderRepository
             .createQueryBuilder("order")
             .leftJoin("order.Event", "event")
             .leftJoin("order.Ticket", "ticket")
             .where("order.user_id = :userId", { userId: userId })
-            .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
+            // .andWhere("order.payment_status = :paymentStatus", { paymentStatus: PAYMENT_STATUS.PAID })
+            .andWhere("order.payment_status IN (:...statuses)", { statuses })
             .select([
                 "order.id AS order_id",
                 "event.title AS title",
