@@ -21,9 +21,11 @@ async function parseSearchQuery(userQuery) {
     你是一個專門解析活動搜尋條件的 JSON 引擎。請嚴格根據以下規則，解析使用者的句子。
 
     <rules>
-      - 你的任務是從句子中提取「地點(location)」、「活動類型(category)」、「開始日期(start_date)」、「結束日期(end_date)」。
+      - 你的任務是從句子中提取「活動標題(title)」、「地點(location)」、「活動類型(category)」、「開始日期(start_date)」、「結束日期(end_date)」、以及「通用搜尋關鍵字(keywords)」。
       - 如果句子的主要目的看起來是在詢問一個「特定的活動名稱」，請優先將它提取到 title 欄位。
       - 如果提取了 title，就可以忽略其他條件。
+      - 如果句子中提到了特定的人名或團體名稱，請將它提取到 performer 欄位。
+      - 如果句子是一般性的描述，請試著從中提取出核心的關鍵字到 keywords 陣列中。例如「適合小朋友的活動」可以提取出 "親子" 或 "兒童"。
       - **最重要規則：如果句子中完全沒有提到任何與「時間」或「日期」相關的詞彙（例如：今天、明天、週末、下個月、六月、日期...等），你「絕對不能」回傳 start_date 和 end_date 這兩個欄位。**
       - category 的值必須是「演唱會」、「音樂會」、「舞台劇」、「其他」之一。如果句子中的類型不符，請忽略 category 欄位。
       - 地點請標準化為台灣的縣市名稱。
@@ -31,8 +33,28 @@ async function parseSearchQuery(userQuery) {
     </rules>
 
     <example>
+      句子："我想找八卦山劇社演的活動"
+      JSON輸出: {"performer": "八卦山劇社"}
+    </example>
+
+    <example>
+      句子："台北市有沒有告五人的演唱會？"
+      JSON輸出: {"location": "台北市", "category": "演唱會", "performer": "告五人"}
+    </example>
+    
+    <example>
+      句子："有沒有適合小朋友的活動"
+      JSON輸出: {"keywords": ["親子", "兒童"]}
+    </example>
+
+    <example>
       句子："我想找山城奇遇記的活動"
       JSON輸出: {"title": "山城奇遇記"}
+    </example>
+
+    <example>
+      句子："台北市有沒有搖滾演唱會？"
+      JSON輸出: {"location": "台北市", "category": "演唱會", "keywords": ["搖滾"]}
     </example>
 
     <example>
@@ -58,7 +80,7 @@ async function parseSearchQuery(userQuery) {
     // 增加 generationConfig 來讓回傳更穩定
     generationConfig: {
       responseMimeType: "application/json", // 要求直接回傳 JSON MIME 類型
-      temperature: 0.2, // 降低隨機性，讓模型更遵循指示
+      temperature: 0.1, // 降低隨機性，讓模型更遵循指示
     },
   });
 
@@ -84,23 +106,35 @@ async function queryEventsFromDB(criteria) {
   if (criteria.title) {
     // 使用 Like 進行模糊搜尋，例如 "山城" 也能找到 "《山城奇遇記》"
     queryBuilder.andWhere("event.title LIKE :title", { title: `%${criteria.title}%` });
-  } else {
-    // 如果沒有標題，才使用地點、類型、日期的複合查詢
-    if (criteria.location) {
-      queryBuilder.andWhere("(event.city = :location OR event.location LIKE :locationLike)", {
-        location: criteria.location,
-        locationLike: `%${criteria.location}%`,
+  }
+  // --- 新增的表演者搜尋邏輯 ---
+  if (criteria.performer) {
+    queryBuilder.andWhere("event.performance_group LIKE :performer", { performer: `%${criteria.performer}%` });
+  }
+  // 如果沒有標題，才使用地點、類型、日期的複合查詢
+  if (criteria.location) {
+    queryBuilder.andWhere("(event.city = :location OR event.location LIKE :locationLike)", {
+      location: criteria.location,
+      locationLike: `%${criteria.location}%`,
+    });
+  }
+  if (criteria.category) {
+    queryBuilder.andWhere("type.name = :category", { category: criteria.category });
+  }
+  // --- 新增的關鍵字搜尋邏輯 ---
+  if (criteria.keywords && criteria.keywords.length > 0) {
+    // 用迴圈為每一個關鍵字都加上模糊搜尋的條件
+    criteria.keywords.forEach((keyword, index) => {
+      queryBuilder.andWhere(`(event.title LIKE :kw${index} OR event.description LIKE :kw${index})`, {
+        [`kw${index}`]: `%${keyword}%`,
       });
-    }
-    if (criteria.category) {
-      queryBuilder.andWhere("type.name = :category", { category: criteria.category });
-    }
-    if (criteria.start_date && criteria.end_date) {
-      queryBuilder.andWhere("event.start_at BETWEEN :start AND :end", {
-        start: criteria.start_date,
-        end: dayjs(criteria.end_date).endOf("day").toDate(),
-      });
-    }
+    });
+  }
+  if (criteria.start_date && criteria.end_date) {
+    queryBuilder.andWhere("event.start_at BETWEEN :start AND :end", {
+      start: criteria.start_date,
+      end: dayjs(criteria.end_date).endOf("day").toDate(),
+    });
   }
 
   const events = await queryBuilder.orderBy("event.start_at", "ASC").take(10).getMany();
